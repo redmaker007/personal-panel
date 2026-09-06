@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>總覽 — 個人屬性面板 後台</title>
+  <link rel="stylesheet" href="/admin/style.css" />
+</head>
+<body>
+  <header class="top">
+    <span class="brand">屬性面板 後台</span>
+    <nav></nav>
+    <span class="spacer"></span>
+    <button id="logout">登出</button>
+  </header>
+  <main>
+    <h1>總覽</h1>
+    <p class="sub">後台骨架 — 功能尚未接上，數字目前多半為 0。</p>
+
+    <div class="cards">
+      <div class="card"><div class="k">總作答數</div><div class="v" id="c-sub">–</div></div>
+      <div class="card"><div class="k">逐題作答筆數</div><div class="v" id="c-ans">–</div></div>
+      <div class="card"><div class="k">題目數（DB）</div><div class="v" id="c-q">–</div></div>
+      <div class="card"><div class="k">最後一筆</div><div class="v" id="c-last" style="font-size:15px">–</div></div>
+    </div>
+
+    <table>
+      <thead><tr><th>模組</th><th>狀態</th><th></th></tr></thead>
+      <tbody>
+        <tr><td>題庫匯入（從 index.html）</td><td><span class="tag">可用</span></td><td>npm run import</td></tr>
+        <tr><td>題目編輯（改內容）</td><td><span class="tag">可用</span></td><td><a href="/admin/questions.html">開啟</a></td></tr>
+        <tr><td>新增／刪除／換序整題</td><td><span class="tag">未做</span></td><td>需連動前端 KEY / CODE_VER</td></tr>
+        <tr><td>編輯回寫 index.html</td><td><span class="tag">未做</span></td><td>目前編輯只進 DB</td></tr>
+        <tr><td>選項數據</td><td><span class="tag">骨架</span></td><td><a href="/admin/stats.html">開啟</a></td></tr>
+        <tr><td>作答回收 API</td><td><span class="tag">骨架</span></td><td>POST /api/responses</td></tr>
+      </tbody>
+    </table>
+  </main>
+
+  <script type="module">
+    import { api, mountNav } from "/admin/app.js";
+    mountNav("/admin/");
+    try {
+      const s = await api("/stats/summary");
+      document.querySelector("#c-sub").textContent = s.submissions;
+      document.querySelector("#c-ans").textContent = s.answers;
+      document.querySelector("#c-last").textContent = s.last_submission || "尚無";
+      const qs = await api("/questions");
+      document.querySelector("#c-q").textContent = qs.length;
+    } catch (e) {
+      console.error(e);
+    }
+  </script>
+</body>
+</html>

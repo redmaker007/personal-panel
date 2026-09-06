@@ -1,0 +1,240 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>題目 — 個人屬性面板 後台</title>
+  <link rel="stylesheet" href="/admin/style.css" />
+</head>
+<body>
+  <header class="top">
+    <span class="brand">屬性面板 後台</span>
+    <nav></nav>
+    <span class="spacer"></span>
+    <button id="logout">登出</button>
+  </header>
+  <main id="main"></main>
+
+  <script type="module">
+    import { api, mountNav } from "/admin/app.js";
+    mountNav("/admin/questions.html");
+
+    const main = document.querySelector("#main");
+    const esc = (s) => String(s ?? "").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+    const params = new URLSearchParams(location.search);
+    const editId = params.get("id");
+
+    let DIMS = [];
+    const dimName = (k) => {
+      const d = DIMS.find((x) => x.key === k);
+      return d ? `${d.name_zh}` : k;
+    };
+
+    /* ============ 清單 ============ */
+    async function renderList() {
+      const qs = await api("/questions");
+      let blk = params.get("blk") || "all";
+      const blocks = ["all", "b1", "b2", "b3", "b4"];
+      const label = { all: "全部", b1: "區塊一 硬件客觀", b2: "區塊二 硬件情境", b3: "區塊三 軟件情境", b4: "區塊四 交叉校驗" };
+
+      function draw() {
+        const shown = qs.filter((q) => blk === "all" || q.block === blk);
+        main.innerHTML = `
+          <h1>題目</h1>
+          <p class="sub">共 ${qs.length} 題。點「編輯」可改題幹、選項文字與維度加分。</p>
+          <div class="filter-bar">
+            ${blocks.map((b) => `<button data-b="${b}" class="${b === blk ? "on" : ""}">${label[b]}</button>`).join("")}
+          </div>
+          <table>
+            <thead><tr><th>#</th><th>區塊</th><th>類型</th><th>題幹</th><th>選項</th><th></th></tr></thead>
+            <tbody>${shown.map((q) => `
+              <tr>
+                <td>${q.abs_idx}</td>
+                <td><span class="tag">${q.block}</span></td>
+                <td>${q.type}${q.shuffled ? " · 打亂" : ""}</td>
+                <td>${esc(q.stem_zh) || "<i>（空）</i>"}</td>
+                <td>${(q.options || []).length || "—"}</td>
+                <td><a href="/admin/questions.html?id=${q.id}">編輯</a></td>
+              </tr>`).join("")}
+            </tbody>
+          </table>`;
+        main.querySelectorAll(".filter-bar button").forEach((btn) => {
+          btn.onclick = () => {
+            blk = btn.dataset.b;
+            const u = new URL(location);
+            u.searchParams.set("blk", blk);
+            history.replaceState(null, "", u);
+            draw();
+          };
+        });
+      }
+      draw();
+    }
+
+    /* ============ 編輯 ============ */
+    async function renderEdit(id) {
+      const [q, dims] = await Promise.all([api("/questions/" + id), api("/dimensions")]);
+      DIMS = dims;
+
+      // 本地可變狀態
+      const model = {
+        stem_zh: q.stem_zh,
+        stem_en: q.stem_en,
+        shuffled: !!q.shuffled,
+        num_min: q.num_min, num_max: q.num_max,
+        unit_zh: q.unit_zh, unit_en: q.unit_en, placeholder: q.placeholder,
+        options: (q.options || []).map((o) => ({
+          label_zh: o.label_zh,
+          label_en: o.label_en,
+          score: JSON.parse(o.score_json || "{}"),
+        })),
+      };
+
+      const dimOptionsHtml = DIMS.map((d) =>
+        `<option value="${d.key}">${esc(d.name_zh)} — ${d.key} (${d.domain || "?"})</option>`
+      ).join("");
+
+      function draw() {
+        const isNum = q.type === "num";
+        main.innerHTML = `
+          <p><a href="/admin/questions.html${params.get("blk") ? "?blk=" + params.get("blk") : ""}">← 回題目清單</a></p>
+          <h1>編輯題目 #${q.abs_idx}</h1>
+          <div class="meta-line">
+            <span class="tag">${q.block}</span>
+            <span class="tag">${q.type}${q.shuffled ? " · 打亂" : ""}</span>
+            區塊內第 ${q.order_idx + 1} 題 · 絕對題號 ${q.abs_idx} · id ${q.id}
+          </div>
+          <div class="banner">
+            編輯只寫進後台資料庫。前端測驗目前仍讀 <code>index.html</code> 寫死的題庫，
+            這裡的修改<b>還不會影響線上測驗</b>（回寫 index.html 是下一步）。
+          </div>
+
+          <div class="field">
+            <label>題幹（中）</label>
+            <textarea id="stem_zh" rows="2">${esc(model.stem_zh)}</textarea>
+          </div>
+          <div class="field">
+            <label>題幹（英）</label>
+            <textarea id="stem_en" rows="2">${esc(model.stem_en)}</textarea>
+          </div>
+
+          ${q.block === "b3" ? `
+          <div class="field inline">
+            <input type="checkbox" id="shuffled" ${model.shuffled ? "checked" : ""} />
+            <label for="shuffled">選項為打亂型（區塊三）</label>
+          </div>` : ""}
+
+          ${isNum ? `
+          <div class="field inline"><label>最小值</label><input type="number" id="num_min" value="${model.num_min ?? ""}" /></div>
+          <div class="field inline"><label>最大值</label><input type="number" id="num_max" value="${model.num_max ?? ""}" /></div>
+          <div class="field inline"><label>單位（中）</label><input type="text" id="unit_zh" value="${esc(model.unit_zh)}" /></div>
+          <div class="field inline"><label>單位（英）</label><input type="text" id="unit_en" value="${esc(model.unit_en)}" /></div>
+          <div class="field inline"><label>提示文字</label><input type="text" id="placeholder" value="${esc(model.placeholder)}" /></div>
+          ` : `
+          <h2 style="font-size:15px;margin:22px 0 10px">選項（${model.options.length}）</h2>
+          <div id="opts"></div>
+          <button id="addOpt" ${model.options.length >= 8 ? "disabled" : ""}>+ 加一個選項</button>
+          `}
+
+          <div class="save-bar">
+            <button class="primary" id="save">儲存</button>
+            <span class="msg" id="msg"></span>
+          </div>`;
+
+        // 綁定純文字欄位
+        const bind = (elId, key) => {
+          const el = main.querySelector("#" + elId);
+          if (el) el.oninput = () => { model[key] = el.type === "checkbox" ? el.checked : el.value; };
+        };
+        bind("stem_zh", "stem_zh"); bind("stem_en", "stem_en"); bind("shuffled", "shuffled");
+        bind("num_min", "num_min"); bind("num_max", "num_max");
+        bind("unit_zh", "unit_zh"); bind("unit_en", "unit_en"); bind("placeholder", "placeholder");
+
+        if (!isNum) drawOpts();
+        main.querySelector("#addOpt")?.addEventListener("click", () => {
+          model.options.push({ label_zh: "", label_en: "", score: {} });
+          draw();
+        });
+        main.querySelector("#save").addEventListener("click", save);
+      }
+
+      function drawOpts() {
+        const box = main.querySelector("#opts");
+        box.innerHTML = model.options.map((o, i) => `
+          <div class="opt" data-i="${i}">
+            <div class="opt-head">
+              <span class="n">選項 ${i + 1}</span>
+              <button data-act="up" ${i === 0 ? "disabled" : ""}>↑</button>
+              <button data-act="down" ${i === model.options.length - 1 ? "disabled" : ""}>↓</button>
+              <button data-act="del" ${model.options.length <= 2 ? "disabled" : ""}>刪除</button>
+            </div>
+            <div class="field"><label>選項文字（中）</label><input type="text" data-f="label_zh" value="${esc(o.label_zh)}" /></div>
+            <div class="field"><label>選項文字（英）</label><input type="text" data-f="label_en" value="${esc(o.label_en)}" /></div>
+            <div class="chips">
+              ${Object.entries(o.score).map(([k, v]) =>
+                `<span class="chip"><b>${esc(dimName(k))}</b> ${v} <button data-rm="${k}">×</button></span>`
+              ).join("") || '<span class="sub" style="font-size:12px">尚無加分</span>'}
+            </div>
+            <div class="score-add">
+              <select data-add="dim">${dimOptionsHtml}</select>
+              <input type="number" data-add="val" min="1" max="5" value="3" />
+              <button data-act="addscore">加入維度</button>
+            </div>
+          </div>`).join("");
+
+        box.querySelectorAll(".opt").forEach((card) => {
+          const i = +card.dataset.i;
+          card.querySelectorAll("input[data-f]").forEach((inp) => {
+            inp.oninput = () => { model.options[i][inp.dataset.f] = inp.value; };
+          });
+          card.querySelectorAll("button[data-rm]").forEach((btn) => {
+            btn.onclick = () => { delete model.options[i].score[btn.dataset.rm]; drawOpts(); };
+          });
+          card.querySelector('[data-act="del"]').onclick = () => { model.options.splice(i, 1); draw(); };
+          card.querySelector('[data-act="up"]').onclick = () => { [model.options[i - 1], model.options[i]] = [model.options[i], model.options[i - 1]]; draw(); };
+          card.querySelector('[data-act="down"]').onclick = () => { [model.options[i + 1], model.options[i]] = [model.options[i], model.options[i + 1]]; draw(); };
+          card.querySelector('[data-act="addscore"]').onclick = () => {
+            const k = card.querySelector('[data-add="dim"]').value;
+            const v = Math.max(1, Math.min(5, parseInt(card.querySelector('[data-add="val"]').value, 10) || 3));
+            model.options[i].score[k] = v;
+            drawOpts();
+          };
+        });
+      }
+
+      async function save() {
+        const msg = main.querySelector("#msg");
+        msg.className = "msg"; msg.textContent = "儲存中…";
+        const payload = q.type === "num"
+          ? {
+              stem_zh: model.stem_zh, stem_en: model.stem_en,
+              num_min: model.num_min === "" ? null : Number(model.num_min),
+              num_max: model.num_max === "" ? null : Number(model.num_max),
+              unit_zh: model.unit_zh, unit_en: model.unit_en, placeholder: model.placeholder,
+            }
+          : {
+              stem_zh: model.stem_zh, stem_en: model.stem_en,
+              shuffled: model.shuffled,
+              options: model.options.map((o) => ({ label_zh: o.label_zh, label_en: o.label_en, score: o.score })),
+            };
+        try {
+          await api("/questions/" + id, { method: "PUT", body: JSON.stringify(payload) });
+          msg.className = "msg ok"; msg.textContent = "已儲存 ✓";
+        } catch (e) {
+          msg.className = "msg bad";
+          msg.textContent = "儲存失敗：" + (e.data?.details ? e.data.details.join("；") : e.message);
+        }
+      }
+
+      draw();
+    }
+
+    try {
+      if (editId) await renderEdit(editId);
+      else await renderList();
+    } catch (e) {
+      main.innerHTML = `<div class="empty">載入失敗：${esc(e.message)}</div>`;
+    }
+  </script>
+</body>
+</html>

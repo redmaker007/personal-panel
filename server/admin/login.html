@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>後台登入 — 個人屬性面板</title>
+  <link rel="stylesheet" href="/admin/style.css" />
+</head>
+<body>
+  <div class="login-wrap">
+    <h1>後台登入</h1>
+    <p class="sub">個人屬性面板</p>
+    <form id="f">
+      <input type="password" id="pw" placeholder="密碼" autofocus />
+      <button class="primary" type="submit">登入</button>
+      <div class="err" id="err"></div>
+    </form>
+  </div>
+  <script type="module">
+    document.querySelector("#f").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const err = document.querySelector("#err");
+      err.textContent = "";
+      const res = await fetch("/api/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ password: document.querySelector("#pw").value }),
+      });
+      if (res.ok) location.href = "/admin/";
+      else err.textContent = "密碼錯誤";
+    });
+  </script>
+</body>
+</html>

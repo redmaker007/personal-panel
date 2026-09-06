@@ -1,0 +1,153 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>選項數據 — 個人屬性面板 後台</title>
+  <link rel="stylesheet" href="/admin/style.css" />
+</head>
+<body>
+  <header class="top">
+    <span class="brand">屬性面板 後台</span>
+    <nav></nav>
+    <span class="spacer"></span>
+    <button id="logout">登出</button>
+  </header>
+  <main>
+    <h1>選項數據</h1>
+    <p class="sub">
+      上半部是<b>題庫體檢</b>，不需作答資料、現在就能看。判讀方式見
+      <code>docs/準確率方法論.md</code>。下半部要等 <code>POST /api/responses</code> 有資料。
+    </p>
+
+    <!-- ============ 題庫體檢 ============ -->
+    <h2 class="sec">題庫體檢（不需作答資料）</h2>
+    <div class="cards" id="audit-cards"></div>
+    <div id="audit-body"></div>
+
+    <!-- ============ 作答數據 ============ -->
+    <h2 class="sec">作答數據（需回收資料）</h2>
+    <div class="cards">
+      <div class="card"><div class="k">總作答數</div><div class="v" id="c-sub">–</div></div>
+      <div class="card"><div class="k">逐題作答筆數</div><div class="v" id="c-ans">–</div></div>
+    </div>
+    <div id="resp-body"></div>
+  </main>
+
+  <script type="module">
+    import { api, mountNav } from "/admin/app.js";
+    mountNav("/admin/stats.html");
+
+    const esc = (s) => String(s ?? "").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+    const editLink = (id) => `<a href="/admin/questions.html?id=${id}">編輯</a>`;
+
+    /* ---------- 題庫體檢 ---------- */
+    const FLAG_TXT = {
+      single_item: "單題決定", under_covered: "覆蓋 <3", self_only: "只有自評", no_crosscheck: "無交叉校驗",
+      dominant_option: "有支配選項", pure_ranking: "退化成排序題",
+    };
+    const flagChip = (f, bad) => `<span class="flag${bad ? " bad" : ""}">${FLAG_TXT[f] || f}</span>`;
+
+    try {
+      const [sum, cov, b3, mono, spread, bal] = await Promise.all([
+        api("/audit/summary"), api("/audit/coverage"), api("/audit/b3"),
+        api("/audit/monotonic"), api("/audit/spread"), api("/audit/balance"),
+      ]);
+
+      document.querySelector("#audit-cards").innerHTML = [
+        ["只有自評的維度", sum.dims_self_only, sum.dims_self_only > 0],
+        ["無交叉校驗的維度", sum.dims_no_crosscheck, sum.dims_no_crosscheck > 0],
+        ["覆蓋不足的維度", sum.dims_single_item + sum.dims_under_covered, (sum.dims_single_item + sum.dims_under_covered) > 0],
+        ["b3 有支配選項", sum.b3_dominant_options, sum.b3_dominant_options > 0],
+        ["選項不單調的題", sum.non_monotonic, sum.non_monotonic > 0],
+        ["鑑別力低的題", sum.low_discrimination, sum.low_discrimination > 0],
+      ].map(([k, v, bad]) => `<div class="card"><div class="k">${k}</div><div class="v" style="${bad ? "color:#f0a5a5" : ""}">${v}</div></div>`).join("");
+
+      const body = document.querySelector("#audit-body");
+      let html = "";
+
+      /* 維度覆蓋 */
+      const domName = { hw: "硬件", sw: "軟件", soma: "體型傾向" };
+      html += `<h3 class="sub-sec">維度覆蓋　<span style="font-weight:400">每維度被幾道題涵蓋，分區塊：客觀(b1) / 自評(b2·b3) / 交叉(b4)。目標 ≥3 題且有交叉校驗。</span></h3>`;
+      html += `<table><thead><tr><th>維度</th><th></th><th class="num">客觀</th><th class="num">自評</th><th class="num">交叉</th><th class="num">合計</th><th>旗標</th><th>題號</th></tr></thead><tbody>`;
+      for (const d of cov) {
+        const bad = d.flags.length > 0;
+        html += `<tr class="${bad ? "flagged" : ""}">
+          <td>${esc(d.name_zh)}</td><td><span class="tag">${domName[d.domain] || d.domain}</span></td>
+          <td class="num">${d.n_obj}</td><td class="num">${d.n_self}</td><td class="num">${d.n_cross}</td><td class="num">${d.n_total}</td>
+          <td>${d.flags.map((f) => flagChip(f, f === "single_item" || f === "self_only")).join("")}</td>
+          <td class="opt-mini">${d.questions.join(", ")}</td>
+        </tr>`;
+      }
+      html += `</tbody></table>`;
+
+      /* 區塊三 */
+      const flagged = b3.items.filter((i) => i.dominant_idx !== null);
+      const maxH = Math.max(...b3.position_histogram, 1);
+      html += `<h3 class="sub-sec">區塊三：無最優解稽核　<span style="font-weight:400">${flagged.length} / ${b3.count} 題有一個選項在它涉及的每個維度上都不輸別人（＝有標準答案，違反 b3 的設計）。</span></h3>`;
+      html += `<p class="opt-mini">最強選項落在各位置的題數（理想是平均，代表位置猜不出答案）：</p>`;
+      html += `<div class="hist">${b3.position_histogram.map((n, i) => `<div class="bar" style="height:${Math.round(n / maxH * 100)}%"><span>${n}</span><em>${"ABCDE"[i]}</em></div>`).join("")}</div>`;
+      html += `<p class="opt-mini">同分（無單一最強）：${b3.tie_count} 題</p>`;
+      html += `<table><thead><tr><th>題號</th><th>題幹</th><th>各選項（總分・維度）</th><th></th></tr></thead><tbody>`;
+      for (const it of flagged) {
+        const opts = it.options.map((o) =>
+          `<div class="opt-mini${o.idx === it.dominant_idx ? " dom" : ""}">${"ABCDE"[o.idx]} · ${o.total} · ${Object.entries(o.by_dim).map(([k, v]) => k + v).join(" ")}</div>`
+        ).join("");
+        html += `<tr class="flagged"><td class="num">${it.abs_idx}</td><td>${esc(it.stem_zh)}<br>${it.flags.map((f) => flagChip(f, true)).join("")}</td><td>${opts}</td><td>${editLink(it.id)}</td></tr>`;
+      }
+      html += `</tbody></table>`;
+
+      /* 單調性 */
+      html += `<h3 class="sub-sec">區塊一/二/四：選項單調性　<span style="font-weight:400">這些區塊選項該按 A 最弱 → E 最強排；不遞增的多半是認題錯誤。</span></h3>`;
+      if (!mono.length) html += `<p class="opt-mini">沒有問題。</p>`;
+      else {
+        html += `<table><thead><tr><th>題號</th><th>區塊</th><th>題幹</th><th>選項總分</th><th></th></tr></thead><tbody>`;
+        for (const m of mono) html += `<tr class="flagged"><td class="num">${m.abs_idx}</td><td><span class="tag">${m.block}</span></td><td>${esc(m.stem_zh)}</td><td class="opt-mini">${m.totals.join(" → ")}</td><td>${editLink(m.id)}</td></tr>`;
+        html += `</tbody></table>`;
+      }
+
+      /* 鑑別力 */
+      html += `<h3 class="sub-sec">鑑別力（靜態）　<span style="font-weight:400">選項總分幾乎沒有差、或某維度在每個選項都給一樣的分 —— 這題分不出人。</span></h3>`;
+      if (!spread.length) html += `<p class="opt-mini">沒有問題。</p>`;
+      else {
+        html += `<table><thead><tr><th>題號</th><th>區塊</th><th>題幹</th><th class="num">總分範圍</th><th>持平維度</th><th></th></tr></thead><tbody>`;
+        for (const s of spread) html += `<tr class="flagged"><td class="num">${s.abs_idx}</td><td><span class="tag">${s.block}</span></td><td>${esc(s.stem_zh)}</td><td class="num">${s.total_range}</td><td class="opt-mini">${s.flat_dims.join(", ")}</td><td>${editLink(s.id)}</td></tr>`;
+        html += `</tbody></table>`;
+      }
+
+      /* 平衡 */
+      html += `<h3 class="sub-sec">硬件／軟件平衡</h3>`;
+      html += `<p class="opt-mini">
+        題目：觸及硬件能力維度 ${bal.questions.hw} 題 / 軟件 ${bal.questions.sw} 題（共 ${bal.questions.total} 選擇題）。<br>
+        場景（共 ${bal.scenes.total}）：硬件主導 ${bal.scenes.hw_dominant}、軟件主導 ${bal.scenes.sw_dominant}、均衡 ${bal.scenes.mixed}；含任何硬件維度的場景 ${bal.scenes.any_hw}（${bal.scenes.any_hw_pct}%）。
+      </p>`;
+      html += `<table><thead><tr><th>硬件維度</th><th class="num">涵蓋它的場景數</th></tr></thead><tbody>`;
+      for (const h of [...bal.hw_dim_scene_coverage].sort((a, b) => a.n_scenes - b.n_scenes))
+        html += `<tr class="${h.n_scenes < 4 ? "flagged" : ""}"><td>${esc(h.name_zh)}</td><td class="num">${h.n_scenes}</td></tr>`;
+      html += `</tbody></table>`;
+
+      body.innerHTML = html;
+    } catch (e) {
+      document.querySelector("#audit-body").innerHTML = `<div class="empty">體檢載入失敗：${esc(e.message)}</div>`;
+    }
+
+    /* ---------- 作答數據 ---------- */
+    const s = await api("/stats/summary").catch(() => ({ submissions: 0, answers: 0 }));
+    document.querySelector("#c-sub").textContent = s.submissions;
+    document.querySelector("#c-ans").textContent = s.answers;
+
+    const rows = await api("/stats/all").catch(() => []);
+    const rb = document.querySelector("#resp-body");
+    if (!rows.length) {
+      rb.innerHTML = `<div class="empty">尚無作答資料。前端結果頁接上 <code>POST /api/responses</code> 後，這裡列出每題的選項分佈。</div>`;
+    } else {
+      const byQ = {};
+      for (const r of rows) (byQ[r.q_abs_idx] ??= []).push(r);
+      rb.innerHTML = `<table><thead><tr><th>題號</th><th>選項分佈</th></tr></thead><tbody>${Object.entries(byQ).map(([q, arr]) => {
+        const tot = arr.reduce((a, b) => a + b.n, 0);
+        return `<tr><td>${q}</td><td>${arr.map((r) => `${r.choice_idx ?? "數值"}: ${r.n} (${Math.round(r.n / tot * 100)}%)`).join(" · ")}</td></tr>`;
+      }).join("")}</tbody></table>`;
+    }
+  </script>
+</body>
+</html>
