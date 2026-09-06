@@ -1,0 +1,712 @@
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>你可能没察觉到的强项</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500&family=Noto+Sans+SC:wght@400;500;700&family=Noto+Serif+SC:wght@600;700&display=swap">
+
+<style>
+:root{
+  --bg:#F2F4F3; --surface:#FFF; --surface-2:#F8FAF9; --line:#E2E7E5; --line-2:#EDF1F0;
+  --ink:#15191A; --ink-2:#4A5254; --muted:#7B8586;
+  --accent:#0A6E9B; --accent-fill:rgba(10,110,155,.08); --accent-line:rgba(10,110,155,.3);
+  --gold:#A85A12; --gold-fill:rgba(168,90,18,.09);
+  --shadow:0 1px 2px rgba(20,25,26,.05), 0 10px 30px -14px rgba(20,25,26,.2);
+  --f-d:"Noto Serif SC", Georgia, serif;
+  --f-b:"Noto Sans SC", -apple-system, "Microsoft YaHei", sans-serif;
+  --f-m:"IBM Plex Mono", ui-monospace, monospace;
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html,body{margin:0;padding:0}
+body{background:var(--bg); color:var(--ink); font:400 16px/1.7 var(--f-b); -webkit-font-smoothing:antialiased}
+.wrap{max-width:680px; margin:0 auto; padding:0 20px}
+.screen{display:none; padding:48px 0 80px}
+.screen.on{display:block}
+
+h1{font:700 30px/1.35 var(--f-d); margin:0 0 14px; letter-spacing:-.01em}
+h2{font:600 20px/1.4 var(--f-d); margin:0 0 10px}
+p{margin:0 0 14px; color:var(--ink-2)}
+.lede{font-size:17px; line-height:1.75}
+.muted{color:var(--muted); font-size:14px}
+b{font-weight:700; color:var(--ink)}
+
+.tag{display:inline-block; font:500 12px/1 var(--f-m); letter-spacing:.08em; text-transform:uppercase;
+  color:var(--accent); background:var(--accent-fill); border:1px solid var(--accent-line);
+  padding:6px 10px; border-radius:999px; margin-bottom:20px}
+.specs{display:flex; gap:26px; margin:26px 0 30px; flex-wrap:wrap}
+.spec{display:flex; flex-direction:column; gap:2px}
+.spec .n{font:600 24px/1 var(--f-m); color:var(--ink)}
+.spec .k{font-size:13px; color:var(--muted)}
+
+button{font:inherit; cursor:pointer; border:none; background:none; color:inherit}
+.btn{display:inline-block; background:var(--ink); color:#fff; padding:14px 30px; border-radius:10px;
+  font-weight:500; font-size:16px; transition:transform .12s ease}
+.btn:hover{transform:translateY(-1px)}
+.btn.ghost{background:none; color:var(--ink-2); border:1px solid var(--line); padding:12px 22px}
+
+.rail{position:sticky; top:0; z-index:5; background:rgba(242,244,243,.93); backdrop-filter:blur(8px);
+  border-bottom:1px solid var(--line); padding:14px 0 12px; margin-bottom:34px}
+.rail .wrap{display:flex; align-items:center; gap:14px}
+.rail .lab{font:500 12px/1 var(--f-m); letter-spacing:.06em; color:var(--muted); white-space:nowrap}
+.bar{flex:1; height:3px; background:var(--line); border-radius:2px; overflow:hidden}
+.bar i{display:block; height:100%; background:var(--accent); border-radius:2px; transition:width .35s ease}
+
+.qtag{font:500 11px/1 var(--f-m); letter-spacing:.09em; text-transform:uppercase; color:var(--muted);
+  margin-bottom:12px; display:block}
+.qstem{font:600 22px/1.5 var(--f-d); margin:0 0 22px; color:var(--ink)}
+.opts{display:flex; flex-direction:column; gap:9px}
+.opt{display:flex; align-items:flex-start; gap:13px; width:100%; text-align:left; background:var(--surface);
+  border:1px solid var(--line); border-radius:11px; padding:15px 17px;
+  transition:border-color .13s ease, background .13s ease, transform .1s ease}
+.opt:hover{border-color:var(--accent-line); background:var(--accent-fill); transform:translateX(2px)}
+.opt .k{flex:none; width:24px; height:24px; border-radius:6px; background:var(--surface-2);
+  border:1px solid var(--line); font:500 12px/22px var(--f-m); text-align:center; color:var(--muted)}
+.opt:hover .k{background:var(--accent); border-color:var(--accent); color:#fff}
+.opt .t{flex:1; line-height:1.55}
+.hint{margin-top:20px; font-size:13px; color:var(--muted)}
+.back{margin-top:26px}
+
+.grid{display:grid; grid-template-columns:repeat(auto-fill,minmax(158px,1fr)); gap:8px; margin-top:6px}
+.grid .opt{padding:12px 14px; font-size:14px; display:block}
+.grid .opt .t{font-weight:500}
+.grid .opt .sub{display:block; font-size:12px; color:var(--muted); font-weight:400; margin-top:3px; line-height:1.45}
+
+.card{background:var(--surface); border:1px solid var(--line); border-radius:16px; padding:30px;
+  box-shadow:var(--shadow); margin-bottom:18px}
+.card.hero{border-color:var(--accent-line); background:linear-gradient(180deg,var(--accent-fill),var(--surface) 60%)}
+.card.known{background:var(--surface-2); box-shadow:none}
+.kicker{font:500 12px/1 var(--f-m); letter-spacing:.08em; text-transform:uppercase; color:var(--accent);
+  margin-bottom:12px; display:block}
+.kicker.g{color:var(--gold)}
+.big{font:700 32px/1.25 var(--f-d); margin:0 0 8px; letter-spacing:-.01em}
+.path{font:500 12px/1 var(--f-m); color:var(--muted); margin-bottom:18px; letter-spacing:.04em}
+.ev{border-left:2px solid var(--accent-line); padding:2px 0 2px 16px; margin:16px 0}
+.ev ul{margin:0; padding:0}
+.ev li{list-style:none; margin-bottom:11px; font-size:15px; line-height:1.6; color:var(--ink-2)}
+.ev li:last-child{margin-bottom:0}
+.ev li b{color:var(--ink)}
+.means{background:var(--surface-2); border-radius:10px; padding:16px 18px; margin-top:18px; font-size:15px; line-height:1.65}
+.means .h{font:700 12px var(--f-m); color:var(--muted); text-transform:uppercase; letter-spacing:.06em; margin-bottom:6px}
+.rank .row{display:flex; align-items:center; gap:12px; padding:9px 0; border-bottom:1px solid var(--line-2); font-size:15px}
+.rank .row:last-child{border-bottom:none}
+.rank .n{font:500 12px var(--f-m); color:var(--muted); width:18px}
+.rank .nm{flex:1}
+.rank .sc{font:500 13px var(--f-m); color:var(--muted)}
+.rank .row.win .nm{font-weight:700}
+.rank .row.win .sc{color:var(--accent)}
+details{margin-top:16px}
+summary{cursor:pointer; font-size:14px; color:var(--muted); padding:6px 0}
+summary:hover{color:var(--ink-2)}
+.acts{display:flex; gap:10px; margin-top:28px; flex-wrap:wrap}
+
+@media(max-width:600px){
+  .screen{padding:32px 0 60px}
+  h1{font-size:25px} .qstem{font-size:19px} .big{font-size:26px} .card{padding:22px}
+}
+</style>
+
+<body>
+
+<section class="screen on" id="s-intro"><div class="wrap">
+  <span class="tag">2.0 · 强项查找器</span>
+  <h1>找出一件你自己<br>可能没察觉到的强项</h1>
+  <p class="lede">
+    全程<b>只问具体的事</b>——你会不会、做起来轻不轻松。不会让你给自己打分，
+    也不会告诉你正在测什么。系统在暗处把 <b>25 个候选</b>一路筛到剩一个。
+  </p>
+  <p class="lede">
+    最后会问你一次：<b>你猜结果是什么？</b>猜中了，说明你对自己认识得准；
+    猜错了，那个差距就是这次测验真正想给你的东西。
+  </p>
+  <div class="specs">
+    <div class="spec"><span class="n" id="sp-q">–</span><span class="k">道题</span></div>
+    <div class="spec"><span class="n">25</span><span class="k">个候选</span></div>
+    <div class="spec"><span class="n">5</span><span class="k">分钟</span></div>
+    <div class="spec"><span class="n">1</span><span class="k">个答案</span></div>
+  </div>
+  <button class="btn" id="btn-start">开始</button>
+  <button class="btn ghost" id="btn-resume" hidden>接着上次</button>
+  <p class="muted" style="margin-top:22px">答案只存在你自己的浏览器里，随时可以中断。</p>
+</div></section>
+
+<section class="screen" id="s-quiz">
+  <div class="rail"><div class="wrap">
+    <span class="lab" id="r-phase">筛选中</span>
+    <div class="bar"><i id="r-bar" style="width:0%"></i></div>
+    <span class="lab" id="r-count">1 / 30</span>
+  </div></div>
+  <div class="wrap">
+    <span class="qtag" id="q-tag"></span>
+    <h2 class="qstem" id="q-stem"></h2>
+    <div class="opts" id="q-opts"></div>
+    <p class="hint" id="q-hint"></p>
+    <button class="btn ghost back" id="btn-back" hidden>← 上一题</button>
+  </div>
+</section>
+
+<section class="screen" id="s-result"><div class="wrap" id="res"></div></section>
+
+<script>
+/* =========================================================
+   25 个候选强项。root/br 只用来在结果页显示路径，不参与计分。
+   ex  = 一句话说明这个强项是什么
+   say = 高分意味着你擅长应对什么（结果页的「这意味着」）
+   ========================================================= */
+const L = {
+  /* ---- 体魄 ---- */
+  str:{n:"力量爆发", root:"体魄", br:"身体能力", ex:"硬出力：搬、抬、撑、拉、瞬间发力",
+    say:"靠绝对力气解决的事不会卡住你——搬家、扛东西、需要一下子使猛劲的场合，别人叫你来是有道理的。"},
+  spd:{n:"速度耐力", root:"体魄", br:"身体能力", ex:"长时间维持：走一整天、连续爬楼、长距离",
+    say:"马拉松式的消耗你熬得住。逛一整天、连续加班、长途奔波，你的后半段不会崩。"},
+  bal:{n:"平衡协调", root:"体魄", br:"身体能力", ex:"重心与时机：站稳、接住、闪避、球类",
+    say:"突发状况时你的身体先动了。不平整的地面、晃动的车、要接要躲的场合，你明显占优。"},
+  flx:{n:"柔韧精细", root:"体魄", br:"身体能力", ex:"手上的活与身体的活动范围",
+    say:"需要手稳、眼准、耐心的活是你的主场——组装、修理、手工、任何要对准的事。"},
+  sta:{n:"身体底子", root:"体魄", br:"体质",     ex:"回血与抗造：恢复、免疫、睡眠、耐受",
+    say:"你可以承受密集排程。熬夜、连续高强度、恶劣环境，对你的损伤比别人小，恢复也快。"},
+
+  /* ---- 决策 ---- */
+  opn:{n:"开放度",     root:"决策", br:"判断", ex:"对不确定的胃口：敢下注、能试错",
+    say:"信息不全也敢动。机会窗口很短、必须先上车再补票的场合，你不会因为犹豫而错过。"},
+  dec:{n:"决断速度",   root:"决策", br:"判断", ex:"从纠结到拍板的时间",
+    say:"你不会卡在选择里。要有人拍板的时候、时间压着的时候，你是那个能往前推的人。"},
+  grt:{n:"跟进纪律",   root:"决策", br:"执行", ex:"长期咬住：自律、统筹、不半途而废",
+    say:"跨月跨年的事你做得完。别人靠热情、你靠系统，所以你的长期计划是能兑现的那种。"},
+  snk:{n:"抗沉没成本", root:"决策", br:"执行", ex:"该止损时放得下",
+    say:"你不会被已经投入的东西绑架。走错路的时候，你的损失总是比别人小，因为你转得早。"},
+
+  /* ---- 认知马力 ---- */
+  lrn:{n:"学习力",   root:"认知马力", br:"吸收",   ex:"上手陌生领域的速度",
+    say:"换赛道对你成本很低。新工具、新领域、新规则，你比别人先摸到能用的程度。"},
+  mem:{n:"记忆力",   root:"认知马力", br:"吸收",   ex:"记得住、调得出",
+    say:"要背要记的事对你不是负担，而且你手上一直握着别人已经忘掉的上下文——这在长线协作里很值钱。"},
+  lng:{n:"语言能力", root:"认知马力", br:"吸收",   ex:"学语言、吸收术语、把话写清楚",
+    say:"文字和语言是你的低摩擦通道。学外语、进入一个满是黑话的新领域、把东西写明白，都比别人省力。"},
+  log:{n:"逻辑推理", root:"认知马力", br:"推理生成", ex:"拆解、找漏洞、处理复杂规则",
+    say:"复杂规则和站不住脚的论述在你面前藏不住。要理清因果、要debug、要看穿条款的场合，你有优势。"},
+  spa:{n:"空间能力", root:"认知马力", br:"推理生成", ex:"图形、结构、方位、立体想象",
+    say:"你脑子里有一张能旋转的图。看图纸、认路、设计实物、想象装配关系，这些对你几乎不费力。"},
+  num:{n:"数感",     root:"认知马力", br:"推理生成", ex:"对数量的直觉：估算、看穿统计",
+    say:"数字骗不了你。算账、抓预算、判断一个数据有没有被玩过，你能很快落到实处。"},
+  cre:{n:"创造力",   root:"认知马力", br:"推理生成", ex:"从零生成：远联想、重新框定问题",
+    say:"没有标准答案的题是你的主场。开放式命题、现有做法走不通的时候，你能给出别人没想到的路。"},
+
+  /* ---- 心性 ---- */
+  emo:{n:"稳定性",   root:"心性", br:"对内", ex:"不被搅动：压力下维持判断",
+    say:"越乱你越好用。突发状况、被质疑、计划全废的时候，你还在正常运作，这让你天然适合当那个定心的人。"},
+  res:{n:"耐挫恢复", root:"心性", br:"对内", ex:"被打一拳之后回血的速度",
+    say:"失败对你的成本低，所以你可以试更多次。这在需要反复被拒绝、反复迭代的事情上是压倒性的优势。"},
+  saw:{n:"自我认知", root:"心性", br:"对内", ex:"知道自己是什么样、为什么这么反应",
+    say:"你不太会误判自己。选择适合自己的路、避开自己的坑、在别人指出问题前就知道——这让你少走很多弯路。"},
+  soc:{n:"社交敏感", root:"心性", br:"对外", ex:"读空气：察觉情绪与关系的变化",
+    say:"没说出口的东西你听得到。谈判桌、会议室、饭局上的暗流，你能读出来并据此调整。"},
+  emp:{n:"共情深度", root:"心性", br:"对外", ex:"真的能感受到对方的感受",
+    say:"人会愿意对你说真话。安慰、调解、需要建立信任的场合，你能到达别人到不了的深度。"},
+  exp:{n:"表达力",   root:"心性", br:"对外", ex:"把话讲到点上、让人听懂",
+    say:"你能把复杂的东西压缩成别人能接住的形状。讲解、说服、争取、上台，这些场合你占便宜。"},
+  ldr:{n:"领导组织", root:"心性", br:"对外", ex:"带头、分派、把一摊人变成一件事",
+    say:"多人多线的乱摊子在你手上会变成流程。需要有人牵头、需要把人组织起来的时候，你顶得上。"},
+
+  /* ---- 产出 ---- */
+  aes:{n:"视觉审美", root:"产出", br:"视觉", ex:"看得出好坏，也做得出好看的",
+    say:"你对视觉的判断是可靠的。挑东西、做设计、布置空间、决定呈现方式，你的意见值得被采纳。"},
+  mus:{n:"音律感",   root:"产出", br:"听觉", ex:"音准、节奏、听得出层次",
+    say:"你的耳朵分辨率比一般人高。学乐器、唱歌、做音频、甚至只是听出一首歌好在哪，你都走得更快。"}
+};
+const KEYS = Object.keys(L);
+
+/* =========================================================
+   阶段 A：广谱剔除（10 题）
+   每题 5 件具体的事，问「哪件最吃力」。被选中的叶子直接出局。
+   每个叶子在这 10 题里出现恰好 2 次（两次机会，都没被选中才留下）。
+   ========================================================= */
+const QA = [
+  {o:[["str","搬重物、扛东西、需要硬力气"],["mem","记住一堆名字和细节"],
+      ["soc","察觉别人情绪的细微变化"],["cre","想一个没人想过的点子"],
+      ["aes","挑东西、搭配、布置空间"]]},
+  {o:[["spd","走一整天、连续爬楼不累"],["log","拆解复杂规则、找逻辑漏洞"],
+      ["ldr","带头把一群人组织起来"],["grt","定了一件事就长期咬住"],
+      ["mus","唱歌跟得上调、听得出编曲层次"]]},
+  {o:[["bal","在晃动的车上站稳、接住扔过来的东西"],["num","心算分账、看穿被玩过的统计"],
+      ["exp","把复杂的事讲给完全外行的人听"],["dec","信息不全时快速拍板"],
+      ["lrn","上手一个完全陌生的领域"]]},
+  {o:[["flx","贴膜、穿针、拧小螺丝这类精细活"],["spa","不靠导航在陌生城市找回去"],
+      ["emp","真的感受到别人的感受"],["snk","该止损的时候干脆放手"],
+      ["lng","学一门新外语、写一段清楚的文字"]]},
+  {o:[["sta","熬夜之后回血、很少生病"],["emo","出事的时候保持镇定"],
+      ["res","搞砸之后快速翻篇"],["saw","清楚知道自己为什么会这么反应"],
+      ["opn","敢下注、接受不确定和试错"]]},
+
+  {o:[["flx","手上的精细活：组装、修理、对准"],["mem","把看过听过的东西记牢"],
+      ["opn","去做一件没做过、可能出糗的事"],["exp","让一屋子人听懂你在说什么"],
+      ["mus","分辨音准和节奏"]]},
+  {o:[["str","一个人搬得动别人要两个人搬的东西"],["spa","看懂复杂的组装图、想象立体结构"],
+      ["dec","在几个差不多的选项里迅速定一个"],["emp","陪一个正在难过的人"],
+      ["cre","现有做法行不通时想出新办法"]]},
+  {o:[["bal","球类、需要瞄准和反应的运动"],["lrn","自己摸索一套没用过的软件或工具"],
+      ["emo","连续几件不顺的事撞在一起还稳得住"],["ldr","把一摊乱七八糟的事分派下去"],
+      ["aes","一眼看出两个设计哪个更好、好在哪"]]},
+  {o:[["sta","高强度连续作战好几天"],["num","估算一个预算、判断一笔账合不合理"],
+      ["res","被明确拒绝之后马上再来一次"],["grt","把一件做到八成、劲已经没了的事收尾"],
+      ["lng","进入一个满是术语黑话的新领域"]]},
+  {o:[["spd","长时间、低强度的消耗"],["log","看穿一段论述哪里站不住脚"],
+      ["soc","看出一屋子人谁跟谁不对付"],["snk","排队等很久后发现不值得，直接走"],
+      ["saw","事情搞砸后说得清哪部分是自己的问题"]]}
+];
+
+/* =========================================================
+   阶段 B/C：定向题，每个叶子 2 道。选项 A 最弱 → E 最强。
+   扣分 [-7,-5,-3,-1,+1]，跑分 <=3 出局。
+   ========================================================= */
+const QB = {
+str:[
+ {q:"从地上抱起一个重物（一大箱书、一袋20公斤的米、一个五六岁的小孩），你的情况是？",
+  o:["抱不起来，只能拖","抱得起来但很勉强、站不太稳","抱得起来，能走几步","还算轻松，能走一段","轻松，还能顺手再拿一样"]},
+ {q:"你能连续做多少个标准伏地挺身（不跪姿、不停顿）？",
+  o:["0–5 个","6–15 个","16–25 个","26–40 个","40 个以上"]}],
+spd:[
+ {q:"用自己舒服的配速慢跑、中间不走路，你最多能跑多久？",
+  o:["5 分钟以内就得停","约 10 分钟","约 20–30 分钟","约 45–60 分钟","一小时以上，而且还有余裕"]},
+ {q:"一口气爬楼梯不休息，爬到第几层会开始明显喘？",
+  o:["2 层就喘","3–4 层","5–7 层","8–12 层","12 层以上还讲得出话"]}],
+bal:[
+ {q:"有人没预警把东西丢向你（例如钥匙），你接住的机率是？",
+  o:["几乎接不到，通常是闪开或被砸到","偶尔接到","一半一半","大多接得到","几乎都接得到，还接得很稳"]},
+ {q:"闭上眼睛单脚站立，你能撑多久不倒？",
+  o:["不到 5 秒","约 5–10 秒","约 11–20 秒","约 21–45 秒","45 秒以上"]}],
+flx:[
+ {q:"贴手机膜、穿针、拧很小的螺丝这类活，你做起来？",
+  o:["基本做不好，会找人帮忙","能做但常失手、要重来","一般，多试两次能成","一次就成，做得整齐","别人会拿来给我做"]},
+ {q:"双腿伸直坐地、身体前弯，你的手能碰到哪里？",
+  o:["连小腿都碰不到，膝盖还得弯","勉强碰到脚踝","碰得到脚趾","手掌能贴到脚掌","上半身能整个贴在腿上"]}],
+sta:[
+ {q:"最近这一年，你感冒或发烧躺平了几次？",
+  o:["5 次以上，而且常拖很久","3–4 次","2 次","1 次","完全没有"]},
+ {q:"做了一次超出平常强度的运动或体力活之后，痠痛会持续多久？",
+  o:["四天以上，而且影响日常动作","约三天","约两天","隔天有感，第二天就差不多好了","几乎不痠痛，隔天照常"]}],
+
+opn:[
+ {q:"一个机会摆在面前，回报可能很大但也可能血本无归，而且信息不全。你通常？",
+  o:["直接不碰，风险太大","想很久，多半最后没做","会做，但只投自己输得起的那部分","认真评估之后会下注","有点兴奋，这种不确定正是我出手的时候"]},
+ {q:"一件你从没做过、而且可能当众出糗的事（唱歌、新运动、跟陌生人搭话）：",
+  o:["能躲就躲","被推着才勉强上","看情况，多半不主动","通常会试试","主动去试，出糗也无所谓"]}],
+dec:[
+ {q:"一群人要决定去哪吃饭或选哪个方案，讨论了十分钟还没结论。你？",
+  o:["也没主意，跟着大家","心里有倾向但不说","提一个，但很容易被说服改","提一个并说清理由，推动定下来","早就定了，一直在等大家"]},
+ {q:"信息只有七成，但现在必须做决定：",
+  o:["会拖到不能再拖","很焦虑，反复改主意","能定，但事后常后悔","定了就往前走","七成对我够了，决定得又快又稳"]}],
+grt:[
+ {q:"过去一年，你当初说要做超过一个月的事，实际做完了几件？",
+  o:["一件也没有","有一件，而且拖了很久","大概一半","多数都完成了","全部完成，而且大致照原订时间"]},
+ {q:"一件事做到八成，最初那股劲已经没了，剩下都是收尾杂事。你？",
+  o:["多半就烂在那里了","会拖很久才收","需要 deadline 逼着才收得掉","会做完，但很不情愿","照常做完，收尾对我不算事"]}],
+snk:[
+ {q:"一件你已经投入很多时间/钱/精力的事，越来越明显是走不通了。你？",
+  o:["很难放手，会继续硬撑，觉得放弃太可惜","拖着，一边做一边纠结","会停，但需要别人推一把","自己就能喊停，及时转向","沉没成本对我基本没影响，看清了就立刻放"]},
+ {q:"排队或等待很久之后，发现这件事其实不值得：",
+  o:["都等这么久了，继续等","很不甘心，但最后还是会走","犹豫一下就走了","直接走，不会多想","我在中途就重新评估过了，不会等到这一步"]}],
+
+lrn:[
+ {q:"给你一个完全陌生的领域，要在一周内摸到能用。一周后你大概？",
+  o:["还没入门，一头雾水","会做眼前需要的那几步，其它不懂","大致会用了","用得挺顺，还摸清了它的逻辑","能教别人，还看得出它哪里设计得不好"]},
+ {q:"公司换了一套新软件，只给你账号和一句「自己摸一下」。一周后：",
+  o:["完全摸不出来，要人手把手教","学会最基本的几个操作","摸个大概，够用","比同事都熟","变成部门里教别人的那个"]}],
+mem:[
+ {q:"一群人刚介绍完自己，隔天你能叫出几个人的名字？",
+  o:["几乎都忘了","一两个","大概一半","大部分","全部，还记得各自的背景"]},
+ {q:"几个月前看过的东西（一本书、一部剧、一次会议的细节）：",
+  o:["基本只剩个印象","记得大概","主要内容记得住","细节也记得不少","能复述得很具体，别人会来问我"]}],
+lng:[
+ {q:"学一门新外语，或吸收一个陌生领域的术语：",
+  o:["很吃力，记不住","慢，但能学会","一般","比多数人快","很快，而且很快就能用得地道"]},
+ {q:"把一段你已经想好的内容写成文字：",
+  o:["写得出来但很干，常卡住","能写，但要改很多遍","一般","写得顺，别人说清楚","又快又好，被夸过文笔"]}],
+log:[
+ {q:"别人给你一段有漏洞的论述：",
+  o:["没听出问题","觉得哪里怪，但说不清","能找到主要漏洞","当场就能拆开","还能看出他为什么会这么想"]},
+ {q:"一套复杂的规则（报税、保险条款、游戏机制）：",
+  o:["看不懂，要人解释","看得懂，但要花很久","一般","看一遍就理清了","还能找出规则里的漏洞或最优解"]}],
+spa:[
+ {q:"在陌生城市不靠导航走回住处：",
+  o:["基本会迷路","得走不少回头路","大致能找回去","没问题","走一遍就记住了整片区域"]},
+ {q:"看一张复杂的组装图（家具、模型）：",
+  o:["完全看不懂","要反复对照才装得起来","一般，慢慢能装","看一遍就会","不看说明书也能装，还看得出图哪里画错了"]}],
+num:[
+ {q:"一群人吃饭分账，有人先走、有人没喝酒：",
+  o:["完全算不清，要靠别人","拿计算器慢慢算","能算，但要点时间","心算就出来了","心算出来，还顺手把零头处理得大家都满意"]},
+ {q:"新闻里的数字（涨了 30%、每 3 人有 1 个）：",
+  o:["不太会去想","觉得可能有问题，但算不清","能大致验算","一眼看出可疑的地方","顺手就重算了，还知道它是怎么被玩的"]}],
+cre:[
+ {q:"一个完全开放的任务：「随便做点什么」。你？",
+  o:["完全没方向","想到的都很普通","能憋出一两个","点子不少","停不下来，还常常跳出题目本身的框"]},
+ {q:"现有的做法行不通了，需要一个新办法：",
+  o:["等别人想","想不出来，只能微调原来的","能想到一两个变通","常常想到别人没想到的","我提的方案常常是最后被采用的那个"]}],
+
+emo:[
+ {q:"出事的时候（计划被打乱、被当众质疑、突发状况），认识你的人会怎么形容你？",
+  o:["最先慌的那个","会乱一下，但拉得回来","跟大家差不多","明显比别人稳","出事时大家会先看你怎么反应"]},
+ {q:"连续几件不顺的事撞在一起：",
+  o:["整个人垮掉，什么都做不了","情绪明显受影响，而且很久","会烦，但撑得住","基本照常运作","越乱我反而越冷静"]}],
+res:[
+ {q:"搞砸一件重要的事之后，你多久缓过来？",
+  o:["好几天，而且明显影响状态","两三天","一天","当天就差不多了","几乎不受影响，很快就翻篇"]},
+ {q:"被明确拒绝或否定（提案被否、被拒绝、失败）：",
+  o:["会消沉很久，不太想再试","需要缓一阵子","会难受，但会再试","很快调整，继续","反而更有劲，会想办法再来一次"]}],
+saw:[
+ {q:"别人指出你一个你没意识到的问题，你的第一反应更接近？",
+  o:["很意外，完全没想到","有点意外","部分认同","「嗯，我知道我这样」","我比他更清楚我为什么会这样"]},
+ {q:"一件事做砸了之后复盘：",
+  o:["说不太清哪里出了问题","大概知道","能找到主要原因","能分清哪些是我的问题、哪些不是","当时就知道自己在犯什么错，只是没拦住"]}],
+soc:[
+ {q:"聊天时，对方的语气忽然变冷了：",
+  o:["没特别察觉，事后才被别人提醒","隐约觉得，但不确定","能察觉","马上察觉，还猜得到大概原因","察觉、知道原因，也知道该怎么接"]},
+ {q:"一屋子人里，谁跟谁不对付、谁在勉强配合：",
+  o:["完全看不出来","事后才知道","大概能感觉到","看得出来","很快就摸清整个屋子的关系网"]}],
+emp:[
+ {q:"朋友在讲他的烦心事：",
+  o:["听着，但没什么感觉","理性上理解","能体会到","感同身受，有点被带进去","太容易被带进去，得刻意抽离"]},
+ {q:"身边的人心情不好时，来找你讲的频率是？",
+  o:["从来没有","很少","偶尔","经常","我是很多人第一个想到的人"]}],
+exp:[
+ {q:"把一件复杂的事讲给完全外行的人听：",
+  o:["讲不清，越讲越乱","能讲，但很啰嗦","一般","讲得清楚","三言两语就让人懂，还常被别人引用"]},
+ {q:"当众发言、上台讲话：",
+  o:["很怕，能躲就躲","能讲，但紧张到发挥不出","一般","讲得不错","很自在，还能带动气氛"]}],
+ldr:[
+ {q:"一件事需要有人牵头，把一群人组织起来：",
+  o:["通常躲开","被推着才做","需要的时候能顶上","常常是我","大家默认我来"]},
+ {q:"一摊乱七八糟、多人多线的事：",
+  o:["完全理不清","能做好自己那部分","能理出个大概","能排出优先级并分派下去","能把它变成清晰的流程，还让人愿意配合"]}],
+
+aes:[
+ {q:"挑礼物、搭衣服、布置空间：",
+  o:["完全没感觉，随便","挑不出好的，但看得出丑的","一般","挑得不错，常被夸","别人会来问我的意见"]},
+ {q:"同一份内容的两个排版或设计摆在你面前：",
+  o:["看不出差别","觉得有差，但说不清","能说出哪个好","能说出为什么好","能直接指出怎么改会更好"]}],
+mus:[
+ {q:"唱歌跟不跟得上调？",
+  o:["明显跑调，而且自己听不出来","会跑调，但听得出来","大致在调上","音准不错","音准很好，还能即兴变化"]},
+ {q:"听一首编曲复杂的歌：",
+  o:["只听得到主旋律和人声","能分出几种乐器","听得出层次","能听出各个声部在做什么","能听出编曲的手法和结构"]}]
+};
+
+/* 阶段 D：预测题 —— 全部答完后才出现，零污染 */
+const PREDICT = "最后一题。前面这些问题，你觉得测出来你最强的会是哪一个？";
+
+/* =========================================================
+   引擎：纯减法淘汰
+   每个叶子起手 10 分。定向题按 [-7,-5,-3,-1,+1] 扣/加。
+   跑分 <= 3 出局，之后不再出它的题。
+   排名用「平均」而非累计——不同叶子的题数不一样，平均才可比。
+   ========================================================= */
+const D = [-7, -5, -3, -1, +1];
+const ELIM = 3;
+const CAP_C = 5;    // 阶段 C（深度）最多几题
+// 阶段 B 不设上限：每个幸存的叶子都必须被问到一次，
+// 否则真正的强项可能因为排在预算之后而被静默跳过。
+
+const KEY = "sf2.v1";
+const $ = s => document.querySelector(s);
+
+let S = null;
+
+function fresh() {
+  return {
+    sc: Object.fromEntries(KEYS.map(k => [k, 10])),  // 跑分
+    n:  Object.fromEntries(KEYS.map(k => [k, 0])),   // 已问几题
+    out: [],        // 出局的叶子
+    log: [],        // {ph, qi, leaf, oi, stem, opt}
+    ph: "A", i: 0,  // 阶段 / 阶段内序号
+    order: null,    // 阶段 B 的提问顺序
+    depth: null,    // 阶段 C 的提问顺序
+    predict: null,
+    done: false
+  };
+}
+
+const avg = k => S.n[k] ? 10 + (S.sc[k] - 10) / S.n[k] : 10;
+const alive = k => S.out.indexOf(k) < 0;
+
+function save() { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {} }
+function load() { try { return JSON.parse(localStorage.getItem(KEY)); } catch (e) { return null; } }
+
+/* ---- 阶段 B 的顺序：按根轮转交错，避免某一根总是排在后面被预算砍掉 ---- */
+function buildOrder() {
+  const byRoot = {};
+  for (const k of KEYS) (byRoot[L[k].root] = byRoot[L[k].root] || []).push(k);
+  const roots = Object.keys(byRoot), out = [];
+  for (let i = 0; ; i++) {
+    let any = false;
+    for (const r of roots) if (byRoot[r][i]) { out.push(byRoot[r][i]); any = true; }
+    if (!any) break;
+  }
+  return out.filter(alive);
+}
+
+/* ---- 下一题是什么 ---- */
+function current() {
+  if (S.ph === "A") return { ph: "A", q: QA[S.i] };
+
+  if (S.ph === "B") {
+    if (!S.order) S.order = buildOrder();
+    while (S.i < S.order.length) {
+      const k = S.order[S.i];
+      if (alive(k) && S.n[k] === 0) return { ph: "B", leaf: k, q: QB[k][0] };
+      S.i++;
+    }
+    S.ph = "C"; S.i = 0;
+  }
+
+  if (S.ph === "C") {
+    if (!S.depth) {
+      S.depth = KEYS.filter(k => alive(k) && S.n[k] === 1)
+                    .sort((a, b) => avg(b) - avg(a))
+                    .slice(0, CAP_C);
+    }
+    if (S.i < S.depth.length) {
+      const k = S.depth[S.i];
+      return { ph: "C", leaf: k, q: QB[k][1] };
+    }
+    S.ph = "D"; S.i = 0;
+  }
+
+  return { ph: "D" };
+}
+
+/* ---- 作答 ---- */
+function answer(oi, cur) {
+  if (cur.ph === "A") {
+    const [leaf, txt] = cur.q.o[oi];
+    S.sc[leaf] -= 7;
+    S.n[leaf] += 1;
+    if (S.sc[leaf] <= ELIM && alive(leaf)) S.out.push(leaf);
+    S.log.push({ ph: "A", leaf, oi, stem: "最吃力的一件事", opt: txt });
+    S.i++;
+    if (S.i >= QA.length) { S.ph = "B"; S.i = 0; }
+  } else if (cur.ph === "B" || cur.ph === "C") {
+    const k = cur.leaf;
+    S.sc[k] += D[oi];
+    S.n[k] += 1;
+    if (S.sc[k] <= ELIM && alive(k)) S.out.push(k);
+    S.log.push({ ph: cur.ph, leaf: k, oi, stem: cur.q.q, opt: cur.q.o[oi] });
+    S.i++;
+  } else {
+    S.predict = oi;      // oi 这里是叶子的 key
+    S.done = true;
+  }
+  save();
+}
+
+/* ---- 进度 ---- */
+function progress() {
+  const asked = S.log.length + (S.done ? 1 : 0);
+  const pendB = KEYS.filter(k => alive(k) && S.n[k] === 0).length;
+  const pendC = S.ph === "C" && S.depth ? Math.max(0, S.depth.length - S.i)
+                                        : Math.min(CAP_C, KEYS.filter(k => alive(k)).length);
+  return { asked, total: asked + pendB + pendC + (S.done ? 0 : 1) };
+}
+
+/* =========================================================
+   渲染
+   ========================================================= */
+function show(id) {
+  document.querySelectorAll(".screen").forEach(s => s.classList.remove("on"));
+  $(id).classList.add("on");
+}
+
+const PH_LAB = { A: "广谱筛选", B: "定向验证", C: "重点确认", D: "最后一题" };
+
+function renderQ() {
+  const cur = current();
+  if (cur.ph === "D" && S.done) return renderResult();
+
+  const p = progress();
+  $("#r-phase").textContent = PH_LAB[cur.ph];
+  $("#r-count").textContent = (p.asked + 1) + " / " + p.total;
+  $("#r-bar").style.width = Math.round(p.asked / p.total * 100) + "%";
+
+  const opts = $("#q-opts");
+  opts.innerHTML = "";
+  opts.className = cur.ph === "D" ? "opts grid" : "opts";
+
+  if (cur.ph === "A") {
+    $("#q-tag").textContent = "以下哪一件，你做起来最吃力？";
+    $("#q-stem").textContent = "把最不擅长的那件挑出来。";
+    $("#q-hint").textContent = "按 1–5 或 A–E 快速选择";
+    cur.q.o.forEach(([k, txt], i) => opts.appendChild(optBtn(i, txt, () => pick(i, cur))));
+  } else if (cur.ph === "B" || cur.ph === "C") {
+    $("#q-tag").textContent = cur.ph === "C" ? "确认" : "";
+    $("#q-stem").textContent = cur.q.q;
+    $("#q-hint").textContent = "按 1–5 或 A–E 快速选择";
+    cur.q.o.forEach((txt, i) => opts.appendChild(optBtn(i, txt, () => pick(i, cur))));
+  } else {
+    $("#q-tag").textContent = "预测";
+    $("#q-stem").textContent = PREDICT;
+    $("#q-hint").textContent = "选一个。这一题不影响计分，只用来比对你的自我认识。";
+    KEYS.forEach(k => {
+      const b = document.createElement("button");
+      b.className = "opt";
+      b.innerHTML = '<span class="t">' + L[k].n + '<span class="sub">' + L[k].ex + '</span></span>';
+      b.onclick = () => { answer(k, cur); renderResult(); };
+      opts.appendChild(b);
+    });
+  }
+
+  $("#btn-back").hidden = S.log.length === 0;
+}
+
+function optBtn(i, txt, fn) {
+  const b = document.createElement("button");
+  b.className = "opt";
+  b.innerHTML = '<span class="k">' + "ABCDE"[i] + '</span><span class="t"></span>';
+  b.querySelector(".t").textContent = txt;
+  b.onclick = fn;
+  return b;
+}
+
+function pick(i, cur) { answer(i, cur); renderQ(); window.scrollTo(0, 0); }
+
+function back() {
+  if (!S.log.length) return;
+  const last = S.log.pop();
+  if (last.ph === "A") {
+    S.sc[last.leaf] += 7; S.n[last.leaf] -= 1;
+    S.ph = "A"; S.i = S.log.filter(x => x.ph === "A").length;
+    S.order = null; S.depth = null;
+  } else {
+    S.sc[last.leaf] -= D[last.oi]; S.n[last.leaf] -= 1;
+    S.ph = last.ph;
+    S.i = Math.max(0, S.i - 1);
+    if (last.ph === "B") S.depth = null;
+  }
+  S.out = S.out.filter(k => S.sc[k] <= ELIM);
+  S.done = false; S.predict = null;
+  save(); renderQ();
+}
+
+/* =========================================================
+   结果
+   ========================================================= */
+function renderResult() {
+  const ranked = KEYS.filter(k => S.n[k] > 0)
+                     .map(k => ({ k, v: avg(k), n: S.n[k] }))
+                     .sort((a, b) => b.v - a.v || b.n - a.n || S.sc[b.k] - S.sc[a.k]);
+
+  const win = ranked[0];
+  const pk = S.predict;
+  const pRank = ranked.findIndex(r => r.k === pk);
+  const pEntry = pRank >= 0 ? ranked[pRank] : null;
+  const hit = pk === win.k;
+
+  // 证据：这个叶子答得好的那几题
+  const ev = S.log.filter(x => x.leaf === win.k && x.ph !== "A" && x.oi >= 3);
+  const evPk = pEntry ? S.log.filter(x => x.leaf === pk && x.ph !== "A" && x.oi >= 3) : [];
+
+  const esc = s => String(s).replace(/[&<>]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" }[c]));
+  const evHtml = list => list.length
+    ? '<div class="ev"><ul>' + list.map(x =>
+        "<li>" + esc(x.stem.replace(/[：:？?]\s*$/, "")) + " → <b>" + esc(x.opt) + "</b></li>").join("") + "</ul></div>"
+    : "";
+
+  let h = "";
+
+  if (hit) {
+    h += '<div class="card hero">';
+    h += '<span class="kicker">你猜中了</span>';
+    h += '<div class="big">' + L[win.k].n + "</div>";
+    h += '<div class="path">' + L[win.k].root + " · " + L[win.k].br + " · " + L[win.k].ex + "</div>";
+    h += "<p>你没有明显盲点——<b>自我认识准确本身就很少见</b>。你猜的和测出来的是同一个。</p>";
+    h += evHtml(ev);
+    h += '<div class="means"><div class="h">这意味着</div>' + L[win.k].say + "</div>";
+    h += "</div>";
+  } else {
+    h += '<div class="card hero">';
+    h += '<span class="kicker">你可能没察觉到</span>';
+    h += '<div class="big">' + L[win.k].n + "</div>";
+    h += '<div class="path">' + L[win.k].root + " · " + L[win.k].br + " · " + L[win.k].ex + "</div>";
+    h += "<p>你猜的不是它。但你自己的这几个回答，一起指向了这里：</p>";
+    h += evHtml(ev);
+    h += '<div class="means"><div class="h">这意味着</div>' + L[win.k].say + "</div>";
+    h += "</div>";
+
+    if (pEntry && pEntry.v >= 9.5) {
+      h += '<div class="card known"><span class="kicker g">你已经知道的</span>';
+      h += "<h2>" + L[pk].n + "</h2>";
+      h += "<p>你猜的这个也确实成立——排在第 " + (pRank + 1) + " 位，证据支持。只是它不是最突出的那个。</p>";
+      h += evHtml(evPk);
+      h += "</div>";
+    } else if (pEntry && pEntry.v >= 8) {
+      h += '<div class="card known"><span class="kicker g">关于你猜的那个</span>';
+      h += "<h2>" + L[pk].n + "</h2>";
+      h += "<p>它排在第 " + (pRank + 1) + " 位，落在中间水平——不弱，但这次的答案没有把它推上去。</p>";
+      h += "</div>";
+    } else if (pEntry) {
+      h += '<div class="card known"><span class="kicker g">关于你猜的那个</span>';
+      h += "<h2>" + L[pk].n + "</h2>";
+      h += "<p>它排在第 " + (pRank + 1) + " 位。你在相关的几道题上答得比较保守，所以这次的证据没有支持它——"
+         + "有可能是这几道题没问到你真正擅长的那一面。</p>";
+      h += "</div>";
+    } else {
+      h += '<div class="card known"><span class="kicker g">关于你猜的那个</span>';
+      h += "<h2>" + L[pk].n + "</h2>";
+      h += "<p>这次没测到足够的证据（前面的筛选把它排除得比较早），所以没法给它一个位置。</p>";
+      h += "</div>";
+    }
+  }
+
+  h += '<div class="card"><h2>完整排名</h2>';
+  h += '<p class="muted">只列出真的被问到过的。分数是平均值，10 = 中间水平。</p>';
+  h += '<div class="rank">';
+  ranked.slice(0, 10).forEach((r, i) => {
+    h += '<div class="row' + (i === 0 ? " win" : "") + '">';
+    h += '<span class="n">' + (i + 1) + "</span>";
+    h += '<span class="nm">' + L[r.k].n + "</span>";
+    h += '<span class="sc">' + r.v.toFixed(1) + " · " + r.n + "题</span></div>";
+  });
+  h += "</div>";
+  h += "<details><summary>被淘汰的 " + S.out.length + " 个候选</summary><p class=\"muted\" style=\"margin-top:10px\">"
+     + (S.out.map(k => L[k].n).join("、") || "无") + "</p></details>";
+  h += "</div>";
+
+  h += '<div class="acts"><button class="btn" id="btn-again">重测一次</button></div>';
+
+  $("#res").innerHTML = h;
+  window.scrollTo(0, 0);
+  $("#btn-again").onclick = () => {
+    S = fresh(); save(); show("#s-quiz"); renderQ();
+  };
+  show("#s-result");
+}
+
+/* =========================================================
+   启动
+   ========================================================= */
+$("#sp-q").textContent = "30+";
+
+const saved = load();
+if (saved && saved.log && saved.log.length) {
+  $("#btn-resume").hidden = false;
+  $("#btn-resume").textContent = saved.done ? "查看上次结果" : "接着上次（第 " + (saved.log.length + 1) + " 题）";
+}
+
+$("#btn-start").onclick = () => { S = fresh(); save(); show("#s-quiz"); renderQ(); };
+$("#btn-resume").onclick = () => {
+  S = saved;
+  if (S.done) renderResult();
+  else { show("#s-quiz"); renderQ(); }
+};
+$("#btn-back").onclick = back;
+
+document.addEventListener("keydown", e => {
+  if (!S || !$("#s-quiz").classList.contains("on")) return;
+  const cur = current();
+  if (cur.ph === "D") return;
+  let i = -1;
+  if (e.key >= "1" && e.key <= "5") i = +e.key - 1;
+  const u = e.key.toUpperCase();
+  if (u >= "A" && u <= "E" && u.length === 1) i = u.charCodeAt(0) - 65;
+  const max = cur.ph === "A" ? cur.q.o.length : cur.q.o.length;
+  if (i >= 0 && i < max) { e.preventDefault(); pick(i, cur); }
+});
+</script>
