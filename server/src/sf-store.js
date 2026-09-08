@@ -1,4 +1,4 @@
-import { createHash } from 'node:crypto';
+import { createHash, randomBytes } from 'node:crypto';
 import { requireSql } from './sf-db.js';
 import { CATALOG_VERSION, KEYS, L } from '../../assets/sf-data.mjs';
 import { DEFAULT_WEIGHTS } from '../../assets/sf-engine.mjs';
@@ -15,7 +15,8 @@ export const fail = (message, status = 400) => { throw Object.assign(new Error(m
 const hash = value => createHash('sha256').update(value).digest('hex');
 const uuid = value => typeof value === 'string' && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(value);
 
-export const settingKey = (key, version = CATALOG_VERSION) => key === 'auto_enabled' ? key : `${version}:${key}`;
+const GLOBAL_SETTINGS = new Set(['auto_enabled', 'rate_limit_salt']);
+export const settingKey = (key, version = CATALOG_VERSION) => GLOBAL_SETTINGS.has(key) ? key : `${version}:${key}`;
 export const getSetting = async (db, key, version = CATALOG_VERSION) =>
   (await db`select value from sf_settings where key = ${settingKey(key, version)}`)[0]?.value;
 export const putSetting = (db, key, value, version = CATALOG_VERSION) => db`
@@ -362,11 +363,25 @@ export async function sessionDetail(id) {
 
 /* ---------------- 限流（serverless 下内存 Map 不可用） ---------------- */
 
-// 只保存地址的哈希前缀，不落原始 IP。
-export const rateBucket = value => createHash('sha256').update(String(value)).digest('hex').slice(0, 16);
+// 只保存地址的**加盐**哈希，不落原始 IP。
+// 不加盐是不够的：IPv4 全空间只有 2^32，拿到库的人可以穷举反查出地址。
+// 盐优先取环境变量 RATE_LIMIT_SALT；没有就生成一个存进 sf_settings。
+let saltCache = null;
+async function rateSalt(db) {
+  if (saltCache) return saltCache;
+  if (process.env.RATE_LIMIT_SALT) return (saltCache = process.env.RATE_LIMIT_SALT);
+  const existing = await getSetting(db, 'rate_limit_salt');
+  if (existing) return (saltCache = existing);
+  const generated = randomBytes(32).toString('hex');
+  await db`insert into sf_settings (key, value) values ('rate_limit_salt', ${generated})
+           on conflict (key) do nothing`;
+  return (saltCache = (await getSetting(db, 'rate_limit_salt')) || generated);
+}
 
-export async function hitRateLimit(bucket, limit = 240, windowSeconds = 60) {
+export async function hitRateLimit(address, limit = 240, windowSeconds = 60) {
   const db = requireSql();
+  const salt = await rateSalt(db);
+  const bucket = 'ip:' + createHash('sha256').update(salt + '|' + String(address)).digest('hex').slice(0, 32);
   const [row] = await db`
     insert into sf_rate_limit (bucket, hits, started_at) values (${bucket}, 1, now())
     on conflict (bucket) do update set

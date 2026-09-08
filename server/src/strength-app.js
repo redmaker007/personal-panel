@@ -9,6 +9,8 @@ import { strength } from './routes/strength.js';
 export function publicApi() {
   const app = express();
   app.disable('x-powered-by');
+  // 部署在 Vercel 的代理后面：让 req.ip 从 x-forwarded-for 解析
+  app.set('trust proxy', true);
   app.use(express.json({ limit: '128kb' }));
   app.use('/api/strength', strength);
   app.use((err, req, res, next) => {

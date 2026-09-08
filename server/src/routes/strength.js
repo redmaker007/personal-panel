@@ -10,14 +10,21 @@ const route = fn => async (req, res, next) => {
 };
 
 // 匿名写入端点限流。serverless 下内存计数活不过一次调用，改用数据库表。
-// 不保存原始 IP：只存它的哈希前缀当桶名。
-const bucketOf = req => 'ip:' + sf.rateBucket(req.ip || '');
+// 原始地址只用来算加盐哈希（在 sf-store 里），不入库。
+//
+// Vercel 上 req.ip 拿到的是代理层地址，对所有访客都一样——不取真实地址的话
+// 全站会共用一个限流桶。x-vercel-forwarded-for 由 Vercel 自己写入，客户端伪造不了。
+const clientAddress = req =>
+  req.headers['x-vercel-forwarded-for'] ||
+  req.headers['x-real-ip'] ||
+  req.headers['x-forwarded-for']?.split(',')[0]?.trim() ||
+  req.ip || '';
 
 strength.use(async (req, res, next) => {
   res.setHeader('Cache-Control', 'no-store');
   if (req.method !== 'POST') return next();
   try {
-    if (!(await sf.hitRateLimit(bucketOf(req)))) {
+    if (!(await sf.hitRateLimit(clientAddress(req)))) {
       return res.status(429).json({ error: '提交过于频繁，稍后将自动重试' });
     }
   } catch (e) {
