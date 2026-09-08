@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="theme-color" content="#101512"><meta name="description" content="从具体的生活经历出发，发现一项你可能忽略的强项。可暂停、续答，并查看支持结果的答案。">
-<title>强项查找器 · 看见你的另一面</title>
+<title>强项查找器 · 旧题库存档</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;600;700&family=Noto+Serif+SC:wght@500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/assets/strength.css">
@@ -17,20 +17,20 @@
 <h1>你擅长的，<br>或许比你<span class="accent">以为的</span><br>多一点。</h1>
 <p class="lead">从那些真实发生过的小事里，<br>找到一个你可能忽略的强项。</p>
 <div class="intro-actions"><button class="button primary" id="start">开始发现 <span aria-hidden="true">↗</span></button><button class="button secondary" id="resume" hidden>继续上次</button></div>
-<div class="intro-meta"><span>约 8–12 分钟</span><span>约 40–56 道题</span><span>随时暂停</span></div>
+<div class="intro-meta"><span>约 5–8 分钟</span><span>约 30–40 道题</span><span>随时暂停</span></div>
 <p class="privacy">开始后，我们会保存你的答案、作答用时、修改记录和结果，用于题目分析与权重校准。无需填写姓名或联系方式。</p><p id="legacy" class="notice" hidden></p></div>
 <aside class="journey-card" aria-label="测验流程"><div class="card-top"><span class="eyebrow">YOUR DISCOVERY</span><span class="folio">01—04</span></div><h2>不用给自己打分。<br>只要回想具体的事。</h2>
-<ol class="journey-list"><li><span>01</span><div><h3>从日常选择开始</h3><p>在两种自然反应中，选更像你的那一种。</p></div></li><li><span>02</span><div><h3>看看真实经历</h3><p>让生活中的细节提供线索。</p></div></li><li><span>03</span><div><h3>再确认一下</h3><p>为最明显的线索补充证据。</p></div></li><li><span>04</span><div><h3>发现你的另一面</h3><p>把你的猜测和结果放在一起。</p></div></li></ol>
+<ol class="journey-list"><li><span>01</span><div><h3>先做减法</h3><p>从不那么擅长的事情开始。</p></div></li><li><span>02</span><div><h3>看看真实经历</h3><p>让生活中的细节提供线索。</p></div></li><li><span>03</span><div><h3>再确认一下</h3><p>为最明显的线索补充证据。</p></div></li><li><span>04</span><div><h3>发现你的另一面</h3><p>把你的猜测和结果放在一起。</p></div></li></ol>
 <div class="card-bottom"><span class="mini-star" aria-hidden="true">✳</span><p>没有标准答案。<br>选最接近你日常状态的那一个。</p></div></aside></section>
 <section id="quiz" class="screen" hidden><div class="quiz-layout"><aside class="quiz-side"><span class="eyebrow">你的发现之旅</span><ol id="steps" class="steps"></ol><div class="side-note"><span class="mini-star" aria-hidden="true">✳</span><p>不用选理想中的自己。<br>选真实发生过的那个你。</p></div></aside>
 <div class="question-area"><div class="progress-head"><span id="phase-label"></span><span id="question-count"></span></div><progress id="progress" value="0" max="100" aria-label="测验进度"></progress><div id="question-content"><p id="q-kicker" class="eyebrow"></p><h2 id="q-stem" tabindex="-1"></h2><p id="q-help" class="question-help"></p><div id="options" class="options" role="group" aria-labelledby="q-stem"></div></div>
-<div class="quiz-controls"><button id="back" class="text-button">← 上一题</button><button id="next" class="button primary" disabled>下一题 <span aria-hidden="true">→</span></button></div><div class="quiz-foot"><span id="keyboard-help">按 1 / 2 选择，Enter 继续</span><button id="pause" class="text-button">保存并暂停</button></div></div></div></section>
+<div class="quiz-controls"><button id="back" class="text-button">← 上一题</button><button id="next" class="button primary" disabled>下一题 <span aria-hidden="true">→</span></button></div><div class="quiz-foot"><span>按 1–5 选择，Enter 继续</span><button id="pause" class="text-button">保存并暂停</button></div></div></div></section>
 <section id="result" class="screen result-screen" hidden><div id="report"></div></section>
 <div id="sync-bar" class="sync-bar" role="status" aria-live="polite"><span class="status-dot"></span><span id="sync-text">准备好了，按自己的节奏开始。</span><button id="retry" class="text-button" hidden>重试同步</button></div>
 </main>
 <footer class="site-footer"><span>STRENGTH FINDER / 2026</span><span>从真实经历，看见更多可能。</span></footer>
 <dialog id="restart-dialog"><form method="dialog"><span class="eyebrow">重新开始</span><h2>开启一次新的发现？</h2><p>当前进度会留在后台记录中，此设备将开始一份新的测验。</p><div class="dialog-actions"><button class="button secondary" value="cancel">保留当前进度</button><button class="button primary" value="start">重新开始</button></div></form></dialog>
 <noscript><p class="notice">请启用 JavaScript 以开始测验。</p></noscript>
-<script type="module" src="/assets/strength.mjs"></script>
+<script type="module" src="/assets/strength-v21.mjs"></script>
 </body></html>
 

@@ -5,15 +5,18 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>後台登入 — 個人屬性面板</title>
   <link rel="stylesheet" href="/admin/style.css" />
+  <link rel="stylesheet" href="/admin/strength-admin.css" />
 </head>
 <body>
   <div class="login-wrap">
-    <h1>後台登入</h1>
-    <p class="sub">個人屬性面板</p>
+    <span class="eyebrow">STRENGTH INTELLIGENCE</span>
+    <h1>进入数据中心</h1>
+    <p class="sub">查看真实回答，理解每一次校准。</p>
     <form id="f">
-      <input type="password" id="pw" placeholder="密碼" autofocus />
+      <label for="pw">管理员密码</label>
+      <input type="password" id="pw" placeholder="输入管理员密码" autocomplete="current-password" required autofocus />
       <button class="primary" type="submit">登入</button>
-      <div class="err" id="err"></div>
+      <div class="err" id="err" role="alert"></div>
     </form>
   </div>
   <script type="module">
@@ -21,13 +24,18 @@
       e.preventDefault();
       const err = document.querySelector("#err");
       err.textContent = "";
+      const button = document.querySelector('button[type="submit"]');
+      button.disabled = true;
+      try {
       const res = await fetch("/api/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ password: document.querySelector("#pw").value }),
       });
       if (res.ok) location.href = "/admin/";
-      else err.textContent = "密碼錯誤";
+      else err.textContent = "密码错误，或管理员尚未配置密码。";
+      } catch { err.textContent = '连接失败，请稍后重试。'; }
+      finally { button.disabled = false; }
     });
   </script>
 </body>

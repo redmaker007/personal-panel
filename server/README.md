@@ -1,3 +1,9 @@
+# 新版强项查找器
+
+新版答题页与后台已接通：/v2.html 和 /admin。请设置 .env 中的 ADMIN_PASSWORD 后运行 npm run dev。新版使用独立 sf_* 表并保留旧数据，npm test 可运行验证。详情见 ../docs/新版升级说明.md。
+
+以下章节描述旧版 index.html 的接口，不代表新版能力。
+
 # 個人屬性面板 — 後台
 
 Node + Express + SQLite（用 Node 22.5+ 內建的 `node:sqlite`，免原生編譯）。
@@ -17,7 +23,7 @@ npm run dev            # 或 npm start
 - 測驗站：http://localhost:4000/ （直接吃專案根目錄的 `index.html`）
 
 密碼從環境變數 `ADMIN_PASSWORD` 讀，放在 `server/.env`（已 gitignore，npm scripts 會用
-`--env-file-if-exists` 載入）。不設的話預設是 `changeme`——**別把真密碼寫死進 `src/auth.js`**。
+`--env-file-if-exists` 載入）。未设置密码时关闭后台登录——**別把真密碼寫死進 `src/auth.js`**。
 
 ## 結構
 
@@ -102,3 +108,5 @@ num 範圍 min < max。後台頁面在 `/admin/questions.html?id=<id>`。
    → 開啟需作答資料的題目分析（見 `docs/準確率方法論.md` 階段二、三）。
 6. 選項數據頁下半部：選項實際被選比例、題—總分相關、自評—錨點落差、num 題分佈。
 7. 驗證換成正經方案（express-session 或 JWT），部署再上 HTTPS。
+
+

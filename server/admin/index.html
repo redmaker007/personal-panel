@@ -1,55 +1,15 @@
-<!doctype html>
-<html lang="zh-Hant">
-<head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>總覽 — 個人屬性面板 後台</title>
-  <link rel="stylesheet" href="/admin/style.css" />
-</head>
-<body>
-  <header class="top">
-    <span class="brand">屬性面板 後台</span>
-    <nav></nav>
-    <span class="spacer"></span>
-    <button id="logout">登出</button>
-  </header>
-  <main>
-    <h1>總覽</h1>
-    <p class="sub">後台骨架 — 功能尚未接上，數字目前多半為 0。</p>
-
-    <div class="cards">
-      <div class="card"><div class="k">總作答數</div><div class="v" id="c-sub">–</div></div>
-      <div class="card"><div class="k">逐題作答筆數</div><div class="v" id="c-ans">–</div></div>
-      <div class="card"><div class="k">題目數（DB）</div><div class="v" id="c-q">–</div></div>
-      <div class="card"><div class="k">最後一筆</div><div class="v" id="c-last" style="font-size:15px">–</div></div>
-    </div>
-
-    <table>
-      <thead><tr><th>模組</th><th>狀態</th><th></th></tr></thead>
-      <tbody>
-        <tr><td>題庫匯入（從 index.html）</td><td><span class="tag">可用</span></td><td>npm run import</td></tr>
-        <tr><td>題目編輯（改內容）</td><td><span class="tag">可用</span></td><td><a href="/admin/questions.html">開啟</a></td></tr>
-        <tr><td>新增／刪除／換序整題</td><td><span class="tag">未做</span></td><td>需連動前端 KEY / CODE_VER</td></tr>
-        <tr><td>編輯回寫 index.html</td><td><span class="tag">未做</span></td><td>目前編輯只進 DB</td></tr>
-        <tr><td>選項數據</td><td><span class="tag">骨架</span></td><td><a href="/admin/stats.html">開啟</a></td></tr>
-        <tr><td>作答回收 API</td><td><span class="tag">骨架</span></td><td>POST /api/responses</td></tr>
-      </tbody>
-    </table>
-  </main>
-
-  <script type="module">
-    import { api, mountNav } from "/admin/app.js";
-    mountNav("/admin/");
-    try {
-      const s = await api("/stats/summary");
-      document.querySelector("#c-sub").textContent = s.submissions;
-      document.querySelector("#c-ans").textContent = s.answers;
-      document.querySelector("#c-last").textContent = s.last_submission || "尚無";
-      const qs = await api("/questions");
-      document.querySelector("#c-q").textContent = qs.length;
-    } catch (e) {
-      console.error(e);
-    }
-  </script>
-</body>
-</html>
+<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>强项数据中心</title><link rel="stylesheet" href="/admin/style.css"><link rel="stylesheet" href="/admin/strength-admin.css"></head><body>
+<header class="top"><span class="brand">强项数据中心</span><nav></nav><span class="spacer"></span><a href="/v2.html" target="_blank" rel="noopener">打开测验 ↗</a><button id="logout">登出</button></header>
+<main><div class="dashboard-heading"><div><span class="eyebrow">STRENGTH INTELLIGENCE</span><h1>让每一次回答，都有迹可循。</h1><p class="sub">完整题库 · 真实作答 · 渐进校准</p></div><button id="refresh">刷新数据</button></div>
+<div class="filter-bar"><label for="catalog-version">题库版本</label><select id="catalog-version" aria-label="查看对应题库的数据"><option value="">正在读取…</option></select><span class="method">不同题库的答案、统计与校准样本分别保存。</span></div>
+<p id="message" role="status" aria-live="polite">正在读取数据…</p>
+<div class="cards" id="metrics"></div>
+<section class="calibration-panel"><div><h2>自动校准</h2><p id="calibration-status"></p><p class="method">按同一变量的两道行为题计算相关性；至少 40 个有效配对、每次新增 20 个配对才调整。每轮变化不超过 0.025，总权重限制在 0.85–1.15。同一匿名浏览器只取最近一次完成记录。快速作答、全选同档记录不参与。</p></div><div class="controls"><button id="toggle-auto" disabled></button><button id="analyze" class="primary">立即分析</button></div></section>
+<p class="method">这些指标衡量当前样本中的一致性，不代表测验已获科学验证。自适应出题会使配对样本偏向领先候选；预测和结果反馈只用于观察，不充当正确答案训练权重。</p>
+<div class="tabs" role="tablist" aria-label="数据视图"><button role="tab" aria-selected="true" aria-controls="questions-panel" id="questions-tab" data-panel="questions-panel">全部题目</button><button role="tab" aria-selected="false" tabindex="-1" aria-controls="weights-panel" id="weights-tab" data-panel="weights-panel">变量与权重</button><button role="tab" aria-selected="false" tabindex="-1" aria-controls="sessions-panel" id="sessions-tab" data-panel="sessions-panel">作答记录</button><button role="tab" aria-selected="false" tabindex="-1" aria-controls="versions-panel" id="versions-tab" data-panel="versions-panel">版本历史</button></div>
+<section id="questions-panel" role="tabpanel" aria-labelledby="questions-tab"><div class="filter-bar"><label>题目 <input id="search" type="search" placeholder="搜索题干、编号或变量"></label><label>阶段 <select id="phase"><option value="">所有阶段</option><option value="A">广谱筛选</option><option value="B">定向验证</option><option value="C">重点确认</option><option value="D">最终预测</option></select></label><button id="export-summary">导出题目统计</button></div><p class="method">「展示未答」按当前答案计算，含返回后撤销的答案。未展示不等于能力弱。展开题目可查看全部选项。</p><div id="question-list"></div></section>
+<section id="weights-panel" role="tabpanel" aria-labelledby="weights-tab" hidden><div class="table-wrap"><table><thead><tr><th>变量</th><th>有效配对</th><th>排除配对</th><th>相关性</th><th>当前权重</th><th>建议权重</th><th>分析结论</th></tr></thead><tbody id="weight-rows"></tbody></table></div></section>
+<section id="sessions-panel" role="tabpanel" aria-labelledby="sessions-tab" hidden><div class="filter-bar"><button id="export-sessions">导出本页记录</button><span class="method">每页 25 份；详情包含所有修改与事件。</span></div><div class="table-wrap"><table><thead><tr><th>开始时间</th><th>状态</th><th>已答</th><th>权重</th><th>反馈</th><th>详情</th></tr></thead><tbody id="session-rows"></tbody></table></div><div class="pagination"><button id="prev-page">上一页</button><span id="page-label"></span><button id="next-page">下一页</button></div></section>
+<section id="versions-panel" role="tabpanel" aria-labelledby="versions-tab" hidden><p class="method">回滚会建立新版本并暂停自动调权。已开始的测验继续使用原版本。</p><div class="table-wrap"><table><thead><tr><th>版本</th><th>时间（UTC）</th><th>原因</th><th>操作</th></tr></thead><tbody id="version-rows"></tbody></table></div></section>
+</main><dialog id="detail-dialog"><div class="dialog-heading"><h2>完整作答记录</h2><button id="close-detail">关闭</button></div><button id="export-detail">导出此份完整记录</button><pre id="detail-content"></pre></dialog><dialog id="rollback-dialog"><form method="dialog"><h2>回滚权重版本</h2><p id="rollback-text"></p><div class="controls"><button value="cancel">取消</button><button value="confirm" class="primary">确认回滚</button></div></form></dialog>
+<script type="module" src="/admin/strength-admin.js"></script></body></html>

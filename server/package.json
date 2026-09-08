@@ -9,6 +9,7 @@
     "node": ">=22.5"
   },
   "scripts": {
+    "test": "node --test test/*.test.mjs",
     "start": "node --disable-warning=ExperimentalWarning --env-file-if-exists=.env src/index.js",
     "dev": "node --disable-warning=ExperimentalWarning --env-file-if-exists=.env --watch src/index.js",
     "import": "node --disable-warning=ExperimentalWarning --env-file-if-exists=.env src/import-questions.js"

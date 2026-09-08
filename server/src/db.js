@@ -21,10 +21,13 @@ export function migrate() {
   if (!cols.includes("abs_idx")) {
     db.exec("ALTER TABLE questions ADD COLUMN abs_idx INTEGER");
   }
-  db.exec("UPDATE meta SET value = '4' WHERE key = 'schema_version'");
+  db.exec("UPDATE meta SET value = '6' WHERE key = 'schema_version'");
 }
 
 export function schemaVersion() {
   const row = db.prepare("SELECT value FROM meta WHERE key = 'schema_version'").get();
   return row ? Number(row.value) : 0;
 }
+
+// Route modules prepare statements during import, so migrate before importing them.
+migrate();

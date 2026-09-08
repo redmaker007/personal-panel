@@ -9,6 +9,7 @@ import { dimensions } from "./routes/dimensions.js";
 import { audit } from "./routes/audit.js";
 import { stats } from "./routes/stats.js";
 import { responses } from "./routes/responses.js";
+import { strength, strengthAdmin } from './routes/strength.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, "..", "..");        // 專案根目錄（放 index.html 的地方）
@@ -18,7 +19,8 @@ const PORT = process.env.PORT || 4000;
 migrate();
 
 const app = express();
-app.use(express.json());
+app.disable('x-powered-by');
+app.use(express.json({limit:'128kb'}));
 
 /* ---------- 驗證 ---------- */
 app.post("/api/login", (req, res) => {
@@ -44,6 +46,8 @@ app.use("/api/questions", requireAuth, questions);     // 後台：需登入
 app.use("/api/dimensions", requireAuth, dimensions);
 app.use("/api/audit", requireAuth, audit);
 app.use("/api/stats", requireAuth, stats);
+app.use('/api/strength', strength);
+app.use('/api/strength-admin', requireAuth, strengthAdmin);
 
 /* ---------- 後台頁面 ---------- */
 // login.html 與 css/js 資產不擋；其餘 .html 需登入。API 本身另有 requireAuth 把關。
@@ -58,9 +62,20 @@ app.use(
 app.get("/admin", requirePage, (req, res) => res.sendFile(join(ADMIN_DIR, "index.html")));
 
 /* ---------- 前端測驗站（原本的靜態站） ---------- */
-app.use("/", express.static(ROOT, { index: "index.html", extensions: ["html"] }));
+app.get('/', (req,res) => res.sendFile(join(ROOT,'v2.html')));
+app.get(['/v2.html','/v2'], (req,res) => res.sendFile(join(ROOT,'v2.html')));
+app.get('/v2-previous.html', (req,res) => res.sendFile(join(ROOT,'v2-previous.html')));
+app.get('/index.html', (req,res) => res.sendFile(join(ROOT,'index.html')));
+app.use('/assets', express.static(join(ROOT,'assets')));
+// Only publish front-end assets; never expose source, .env or the SQLite database.
+app.use((err,req,res,next) => {
+  if (res.headersSent) return next(err);
+  console.error(err.message);
+  res.status(err.status || 500).json({error: err.status === 400 ? '请求格式无效' : '服务暂时不可用，请稍后重试'});
+});
 
-app.listen(PORT, () => {
-  console.log(`個人屬性面板 後台  →  http://localhost:${PORT}/admin`);
-  console.log(`測驗站            →  http://localhost:${PORT}/`);
+const listener = app.listen(PORT, () => {
+  const boundPort = listener.address().port;
+  console.log(`個人屬性面板 後台  →  http://localhost:${boundPort}/admin`);
+  console.log(`測驗站            →  http://localhost:${boundPort}/`);
 });

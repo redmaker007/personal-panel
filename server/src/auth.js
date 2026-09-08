@@ -7,7 +7,7 @@ import { randomBytes } from "node:crypto";
  * 密碼從環境變數 ADMIN_PASSWORD 讀。放在 server/.env（已 gitignore）即可，
  * npm scripts 會用 --env-file-if-exists 載入。不要把真的密碼寫死在這裡。
  */
-const PASSWORD = process.env.ADMIN_PASSWORD || "changeme";
+const PASSWORD = process.env.ADMIN_PASSWORD;
 const COOKIE = "pp_admin";
 const sessions = new Set();
 
@@ -21,7 +21,7 @@ function parseCookies(header = "") {
 }
 
 export function login(password) {
-  if (password !== PASSWORD) return null;
+  if (!PASSWORD || typeof password !== 'string' || password !== PASSWORD) return null;
   const token = randomBytes(24).toString("hex");
   sessions.add(token);
   return token;

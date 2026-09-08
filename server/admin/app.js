@@ -16,9 +16,9 @@ export async function api(path, opts = {}) {
 
 export function mountNav(active) {
   const items = [
-    ["/admin/", "總覽"],
-    ["/admin/questions.html", "題目"],
-    ["/admin/stats.html", "選項數據"],
+    ["/admin/", "强项中心"],
+    ["/admin/questions.html", "旧版题库"],
+    ["/admin/stats.html", "旧版分析"],
   ];
   document.querySelector("header.top nav").innerHTML = items
     .map(([href, label]) => {
