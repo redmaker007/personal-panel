@@ -6,10 +6,10 @@ const STORE = 'sf2.deluxe.'+CATALOG_VERSION, CONFIG_STORE='sf2.config.'+CATALOG_
 const NAMES = ['情境选择','经历核实','再确认一下','你的预测'];
 const esc = s => String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const read = key => { try { return JSON.parse(localStorage.getItem(key)); } catch { return null; } };
-let vault = read(STORE), storageOk=true, conflict=false, busy=false, retryTimer, delay=2000, selected=null, shownAt=0, elapsed=0, config=null;
+let vault = read(STORE), storageOk=true, conflict=false, blocked=false, busy=false, retryTimer, delay=2000, selected=null, shownAt=0, elapsed=0, config=null;
 if (!vault || !Array.isArray(vault.sessions)) vault = { clientId: read('sf2.deluxe.v1')?.clientId || crypto.randomUUID(), activeId:null, sessions:[] };
 const active = () => vault.sessions.find(s=>s.id===vault.activeId);
-function status(text,error=false) { $('#sync-text').textContent=text; $('#sync-bar').classList.toggle('error',error); $('#retry').hidden=!error || conflict; }
+function status(text,error=false) { $('#sync-text').textContent=text; $('#sync-bar').classList.toggle('error',error); $('#retry').hidden=!error || conflict || !!blocked; $('#discard').hidden=!blocked; }
 function save() {
   if (conflict) return false;
   try { localStorage.setItem(STORE,JSON.stringify(vault)); storageOk=true; return true; }
@@ -27,16 +27,24 @@ async function request(path,body,token) {
   return data;
 }
 async function flush() {
-  if(busy || conflict || !vault.sessions.length) return;
+  if(busy || conflict || blocked || !vault.sessions.length) return;
   busy=true; clearTimeout(retryTimer);
   try {
     await drainOutbox(vault,request,save,()=>conflict);
     delay=2000;
     if(!conflict) status(storageOk?'进度已保存 · 已同步到后台':'已同步到后台 · 此设备暂时无法保存续答记录',!storageOk);
   } catch(e) {
-    if(!conflict) {
-      status(e.status===409 || e.status===403 ? '同步遇到冲突：'+e.message : storageOk?'进度已保存在此设备 · 连接恢复后自动同步':'尚未同步，且无法在此设备保存。请保持页面开启并重试。',true);
-      if (e.status!==409 && e.status!==403 && e.status!==400) { retryTimer=setTimeout(flush,delay); delay=Math.min(60000,delay*2); }
+    if(conflict) { busy=false; return; }
+    if (e.status===403) {
+      // The server no longer recognises this session (e.g. its database was reset).
+      // Retrying can never succeed; let the user drop it and start fresh.
+      blocked = e.sessionId || active()?.id || true;
+      status('这份进度无法与后台同步（后台记录可能已被重置）。你可以放弃它，重新开始一次。',true);
+    } else if (e.status===409) {
+      status('同步遇到冲突：'+e.message,true);
+    } else {
+      status(storageOk?'进度已保存在此设备 · 连接恢复后自动同步':'尚未同步，且无法在此设备保存。请保持页面开启并重试。',true);
+      if (e.status!==400) { retryTimer=setTimeout(flush,delay); delay=Math.min(60000,delay*2); }
     }
   } finally { busy=false; }
 }
@@ -134,6 +142,16 @@ $('#next').onclick=submit;
 $('#back').onclick=()=>{if(conflict)return;const s=active();if(!s.answers.length)return;const last=s.answers.pop();addEvent('back');renderQuestion(last.choice);};
 $('#pause').onclick=()=>{if(conflict)return;addEvent('pause');show('intro');resumeLabel();$('#resume').focus();};
 $('#retry').onclick=()=>void flush();
+$('#discard').onclick=()=>{
+  const id = typeof blocked==='string' ? blocked : vault.activeId;
+  vault.sessions = vault.sessions.filter(s=>s.id!==id);
+  if (vault.activeId===id) vault.activeId=null;
+  blocked=false; clearTimeout(retryTimer); delay=2000;
+  try{localStorage.setItem(STORE,JSON.stringify(vault));}catch{}
+  status('已放弃无法同步的进度。可以重新开始。');
+  resumeLabel(); show('intro'); $('#start').focus();
+  if(active()) void flush();
+};
 window.addEventListener('online',()=>void flush());
 document.addEventListener('visibilitychange',()=>{
   if(!active() || $('#quiz').hidden)return;

@@ -38,3 +38,10 @@ test('invalid receipts and tab conflicts preserve the outbox',async()=>{
   await drainOutbox(v,async()=>{cancelled=true;return {seq:2};},()=>{throw new Error('must not persist');},()=>cancelled);
   assert.equal(v.sessions[0].events.length,2);
 });
+test('a rejected session tags the error with its id so the client can drop it',async()=>{
+  const v=vault();v.sessions[0].created=true;
+  await assert.rejects(
+    drainOutbox(v,async()=>{throw Object.assign(new Error('会话凭证无效'),{status:403});},()=>{}),
+    e=>e.status===403 && e.sessionId==='session');
+  assert.equal(v.sessions[0].events.length,2);
+});
