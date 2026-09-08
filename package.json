@@ -1,0 +1,12 @@
+{
+  "name": "personal-panel",
+  "version": "2.0.0",
+  "private": true,
+  "type": "module",
+  "description": "强项查找器 — Vercel 部署用的根清单（本地开发见 server/package.json）",
+  "engines": { "node": ">=22.5" },
+  "dependencies": {
+    "express": "^4.21.2",
+    "postgres": "^3.4.9"
+  }
+}

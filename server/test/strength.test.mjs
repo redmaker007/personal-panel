@@ -1,6 +1,6 @@
 import { test, after } from 'node:test';
 import assert from 'node:assert/strict';
-import { mkdtempSync, rmSync } from 'node:fs';
+import { mkdtempSync, rmSync, readFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { randomUUID } from 'node:crypto';
@@ -12,11 +12,33 @@ import { CATALOG, CATALOG_VERSION, KEYS, QA, L } from '../../assets/sf-data.mjs'
 import * as previousData from '../../assets/sf-data-v21.mjs';
 import * as previousEngine from '../../assets/sf-engine-v21.mjs';
 
-const temp=mkdtempSync(join(tmpdir(),'sf-deluxe-test-'));
-process.env.DB_PATH=join(temp,'test.db');
-const store=await import('../src/sf-store.js');
-const {db}=await import('../src/db.js');
-after(()=>{db.close();rmSync(temp,{recursive:true,force:true});});
+// 依赖数据库的测试需要一个**可丢弃**的 Postgres。
+// 绝不回退到 DATABASE_URL——那是生产库，测试会往里写脏数据。
+// 用法：TEST_DATABASE_URL=postgresql://... npm test
+const TEST_DB = process.env.TEST_DATABASE_URL;
+const needsDb = { skip: TEST_DB ? false : '未设置 TEST_DATABASE_URL，跳过依赖数据库的测试' };
+const temp = mkdtempSync(join(tmpdir(), 'sf-deluxe-test-'));
+let store = null, sql = null;
+if (TEST_DB) {
+  process.env.DATABASE_URL = TEST_DB;
+  store = await import('../src/sf-store.js');
+  ({ sql } = await import('../src/sf-db.js'));
+  const schema = readFileSync(new URL('../src/sf-schema.pg.sql', import.meta.url), 'utf8');
+  await sql.unsafe('drop schema if exists public cascade; create schema public;');
+  await sql.unsafe(schema);
+  const { DEFAULT_WEIGHTS } = await import('../../assets/sf-engine.mjs');
+  const { implementations } = await import('../src/sf-versions.js');
+  for (const [version, impl] of Object.entries(implementations)) {
+    await sql`insert into sf_catalog (version, catalog_json) values (${version}, ${sql.json(impl.CATALOG)})
+              on conflict (version) do nothing`;
+    const [row] = await sql`insert into sf_weight_versions (weights_json, reason, report_json, catalog_version)
+      values (${sql.json(DEFAULT_WEIGHTS)}, ${'初始权重 · ' + version}, ${sql.json({})}, ${version}) returning id`;
+    await sql`insert into sf_settings (key, value) values (${version + ':active_version'}, ${String(row.id)})
+              on conflict (key) do update set value = excluded.value`;
+  }
+  await sql`insert into sf_settings (key, value) values ('auto_enabled','true') on conflict (key) do nothing`;
+}
+after(async () => { if (sql) await sql.end(); rmSync(temp, { recursive: true, force: true }); });
 function session(clientId=randomUUID()) {
   const config=store.configuration(),s={id:randomUUID(),token:randomUUID(),clientId,catalogVersion:CATALOG_VERSION,version:config.version,weights:config.weights,answers:[],seq:0};
   store.createSession(s);return s;
@@ -85,7 +107,7 @@ test('unscored experience is neither a low score nor training evidence; no-exper
   assert.equal(answers.filter(a=>a.skipped).length,25);
   assert.ok(answers.filter(a=>a.skipped).every(a=>a.delta===0&&a.affectedLeaf===null));
 });
-test('retries are idempotent, revisions retain event history, rejected batches roll back atomically',()=>{
+test('retries are idempotent, revisions retain event history, rejected batches roll back atomically',needsDb,()=>{
   const s=session();assert.equal(store.createSession(s).seq,0);
   const view=event(s,'view',{questionId:'A.0'});
   store.recordEvents(s.id,s.token,[view]);
@@ -105,7 +127,7 @@ test('retries are idempotent, revisions retain event history, rejected batches r
   assert.equal(q.shown,1);assert.equal(q.answered,1);assert.equal(q.revisions,1);
   assert.equal(summary.questions.find(q=>q.id==='predict').neverShown,1);
 });
-test('calibration waits for real sample thresholds, rejects rapid answers and repeat browsers, pins old sessions, and supports rollback',()=>{
+test('calibration waits for real sample thresholds, rejects rapid answers and repeat browsers, pins old sessions, and supports rollback',needsDb,()=>{
   const old=session(),original=store.activeWeights();
   for(let i=0;i<39;i++) finish(session(),3+i%2);
   assert.equal(store.activeWeights().version,original.version);
@@ -128,7 +150,7 @@ test('calibration waits for real sample thresholds, rejects rapid answers and re
   assert.equal(store.sessionDetail(fortieth.id).feedback,4);
   assert.throws(()=>event(fortieth,'back'));
 });
-test('historical sessions retain their original rules; statistics, rollback and weights never cross catalog versions',()=>{
+test('historical sessions retain their original rules; statistics, rollback and weights never cross catalog versions',needsDb,()=>{
   const before=store.summary(),oldWeights=store.activeWeights('sf2.1');
   const s={id:randomUUID(),token:randomUUID(),clientId:randomUUID(),catalogVersion:'sf2.1',version:oldWeights.version};
   store.createSession(s);const answers=[],events=[];let seq=0;
@@ -145,7 +167,7 @@ test('historical sessions retain their original rules; statistics, rollback and 
   assert.throws(()=>store.createSession({...s,id:randomUUID(),catalogVersion:CATALOG_VERSION}));
   assert.throws(()=>store.rollback(oldWeights.version));
 });
-test('existing SQLite weight rows migrate in place while the new catalog starts at neutral weights',()=>{
+test('existing SQLite weight rows migrate in place while the new catalog starts at neutral weights',needsDb,()=>{
   const filename=join(temp,'migration.db'),oldDb=new DatabaseSync(filename);
   oldDb.exec(`CREATE TABLE sf_catalog(version TEXT PRIMARY KEY,catalog_json TEXT NOT NULL,created_at TEXT DEFAULT CURRENT_TIMESTAMP);
     CREATE TABLE sf_weight_versions(id INTEGER PRIMARY KEY AUTOINCREMENT,weights_json TEXT NOT NULL,reason TEXT NOT NULL,report_json TEXT NOT NULL,created_at TEXT DEFAULT CURRENT_TIMESTAMP);
@@ -158,7 +180,7 @@ test('existing SQLite weight rows migrate in place while the new catalog starts 
   const output=execFileSync(process.execPath,['--input-type=module','-e',source],{cwd:new URL('..',import.meta.url),env:{...process.env,DB_PATH:filename},encoding:'utf8'});
   const migrated=JSON.parse(output);assert.equal(migrated.old.version,1);assert.equal(migrated.old.weights.str,1.12);assert.deepEqual(migrated.current.weights,DEFAULT_WEIGHTS);assert.deepEqual(JSON.parse(migrated.counts.value),{str:80});assert.equal(migrated.currentCounts,null);assert.deepEqual(migrated.catalogs,['sf2.2','sf2.1']);
 });
-test('HTTP endpoints protect analytics and sensitive paths; full browser event protocol persists across server restart',async()=>{
+test('HTTP endpoints protect analytics and sensitive paths; full browser event protocol persists across server restart',needsDb,async()=>{
   const password=randomUUID();
   let child,base;
   async function start(){

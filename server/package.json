@@ -12,9 +12,11 @@
     "test": "node --test test/*.test.mjs",
     "start": "node --disable-warning=ExperimentalWarning --env-file-if-exists=.env src/index.js",
     "dev": "node --disable-warning=ExperimentalWarning --env-file-if-exists=.env --watch src/index.js",
-    "import": "node --disable-warning=ExperimentalWarning --env-file-if-exists=.env src/import-questions.js"
+    "import": "node --disable-warning=ExperimentalWarning --env-file-if-exists=.env src/import-questions.js",
+    "migrate": "node --disable-warning=ExperimentalWarning --env-file-if-exists=.env src/migrate-pg.js"
   },
   "dependencies": {
-    "express": "^4.21.2"
+    "express": "^4.21.2",
+    "postgres": "^3.4.9"
   }
 }

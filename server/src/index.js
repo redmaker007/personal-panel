@@ -10,6 +10,7 @@ import { audit } from "./routes/audit.js";
 import { stats } from "./routes/stats.js";
 import { responses } from "./routes/responses.js";
 import { strength, strengthAdmin } from './routes/strength.js';
+import { configured as pgConfigured } from './sf-db.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, "..", "..");        // 專案根目錄（放 index.html 的地方）
@@ -76,6 +77,9 @@ app.use((err,req,res,next) => {
 
 const listener = app.listen(PORT, () => {
   const boundPort = listener.address().port;
-  console.log(`個人屬性面板 後台  →  http://localhost:${boundPort}/admin`);
-  console.log(`測驗站            →  http://localhost:${boundPort}/`);
+  console.log(`強項查找器  →  http://localhost:${boundPort}/`);
+  console.log(`後台        →  http://localhost:${boundPort}/admin`);
+  console.log(pgConfigured
+    ? '2.0 資料庫  →  Postgres（DATABASE_URL）'
+    : '2.0 資料庫  →  未配置 DATABASE_URL，強項查找器的後端不可用（1.0 後台仍可使用）');
 });

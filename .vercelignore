@@ -1,0 +1,20 @@
+# Vercel 只需要静态前端 + api/。其余不上传。
+server/node_modules
+server/data
+server/admin
+server/test
+server/src/schema.sql
+server/src/sf-schema.sql
+server/src/import-questions.js
+server/src/routes/questions.js
+server/src/routes/audit.js
+server/src/routes/stats.js
+server/src/routes/dimensions.js
+server/src/routes/responses.js
+server/src/db.js
+server/src/auth.js
+server/README.md
+docs
+overview guide.txt
+*.md
+.claude
